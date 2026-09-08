@@ -5,6 +5,7 @@ import type { EjercicioEstudiante, EstadoSimulacro, ResultadoIntento, SiguienteS
 import { CuerpoEjercicio, Retroalimentacion } from '../components/Ejercicio'
 import { Alerta, Cargando, Modal, Toast } from '../components/ui'
 import { mmss } from '../utils/formato'
+import { uuid } from '../utils/uuid'
 
 /** M-09 · Simulacro en curso (HU-014, HU-015, HU-016). */
 export function SimulacroEnCursoPage() {
@@ -21,7 +22,7 @@ export function SimulacroEnCursoPage() {
   const [restante, setRestante] = useState<number | null>(null)
   const [toast, setToast] = useState<{ texto: string; tipo: 'ok' | 'warn' | 'bad' } | null>(null)
   const [sinConexion, setSinConexion] = useState(!navigator.onLine)
-  const token = useRef<string>(crypto.randomUUID())
+  const token = useRef<string>(uuid())
   const offsetServidor = useRef(0)        // servidor − cliente, para que el temporizador siga la hora del servidor (HU-016 CA-03)
   const finalizando = useRef(false)
   const pendiente = useRef<{ idOpcion: number; confianza: number } | null>(null)
@@ -42,7 +43,7 @@ export function SimulacroEnCursoPage() {
       if (r.finalizado || !r.ejercicio) { irResultado(); return }
       setEjercicio(r.ejercicio)
       setSeleccion(null); setConfianza(null); setResultado(null)
-      token.current = crypto.randomUUID()
+      token.current = uuid()
     } catch (e) {
       if (e instanceof ApiError && e.esRed) setSinConexion(true)
       else setError(mensajeDe(e))

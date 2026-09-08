@@ -5,6 +5,7 @@ import type { EjercicioEstudiante, ResultadoIntento } from '../api/types'
 import { CuerpoEjercicio, Retroalimentacion } from '../components/Ejercicio'
 import { Alerta, Cargando } from '../components/ui'
 import { fechaHora } from '../utils/formato'
+import { uuid } from '../utils/uuid'
 
 /** M-06 · Resolver un ejercicio en práctica libre (HU-009, HU-010, HU-011, HU-012). */
 export function EjercicioPage() {
@@ -20,13 +21,13 @@ export function EjercicioPage() {
   const [confianza, setConfianza] = useState<number | null>(null)
   const [resultado, setResultado] = useState<ResultadoIntento | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const [token, setToken] = useState(() => crypto.randomUUID())
+  const [token, setToken] = useState(() => uuid())
   const [finFiltro, setFinFiltro] = useState<string | null>(null)
 
   const cargar = useCallback(() => {
     setEjercicio(null); setError(null); setNoDisponible(false)
     setSeleccion(null); setConfianza(null); setResultado(null); setFinFiltro(null)
-    setToken(crypto.randomUUID())
+    setToken(uuid())
     api<EjercicioEstudiante>(`/ejercicios/${id}`)
       .then(setEjercicio)
       .catch(e => { if (e instanceof ApiError && e.estado === 410) setNoDisponible(true); else setError(mensajeDe(e)) })
