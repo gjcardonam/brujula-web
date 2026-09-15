@@ -1,82 +1,193 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { api, mensajeDe } from '../api/client'
-import type { Mensaje, Usuario } from '../api/types'
-import { useAuth } from '../auth/AuthContext'
-import { Alerta } from '../components/ui'
+import { useEffect, useId, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { api, mensajeDe } from '@/api/client'
+import type { Usuario } from '@/api/types'
+import { useAuth } from '@/auth/AuthContext'
+import { borrarSesion } from '@/auth/session'
+import { Aviso } from '@/components/Aviso'
+import { Campo } from '@/components/Campo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { enfocarPrimerError } from '@/utils/foco'
 
-/** M-04 · Mi perfil y cambio de contraseña (HU-005). */
+const PASSWORD = /^(?=.*[a-záéíóúñ])(?=.*[A-ZÁÉÍÓÚÑ])(?=.*\d)(?=.*[.,+\-*_@])\S{8,15}$/
+
+type ErroresPerfil = Partial<Record<'nombre' | 'apellido', string>>
+type ErroresPassword = Partial<Record<'actual' | 'nueva' | 'confirmacion', string>>
+
 export function PerfilPage() {
   const { usuario, actualizar } = useAuth()
+  const navigate = useNavigate()
+  const idCorreo = useId()
+
   const [nombre, setNombre] = useState(usuario?.nombre ?? '')
   const [apellido, setApellido] = useState(usuario?.apellido ?? '')
-  const [msgPerfil, setMsgPerfil] = useState<{ tipo: 'ok' | 'err'; texto: string } | null>(null)
+  const [erroresPerfil, setErroresPerfil] = useState<ErroresPerfil>({})
+  const [avisoPerfil, setAvisoPerfil] = useState<{ tono: 'error' | 'confirmacion'; texto: string } | null>(null)
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false)
+
   const [actual, setActual] = useState('')
   const [nueva, setNueva] = useState('')
   const [confirmacion, setConfirmacion] = useState('')
-  const [msgPw, setMsgPw] = useState<{ tipo: 'ok' | 'err'; texto: string } | null>(null)
-  const [guardando, setGuardando] = useState(false)
+  const [erroresPw, setErroresPw] = useState<ErroresPassword>({})
+  const [avisoPw, setAvisoPw] = useState<{ tono: 'error' | 'confirmacion'; texto: string } | null>(null)
+  const [guardandoPw, setGuardandoPw] = useState(false)
 
-  useEffect(() => { setNombre(usuario?.nombre ?? ''); setApellido(usuario?.apellido ?? '') }, [usuario])
+  useEffect(() => {
+    setNombre(usuario?.nombre ?? '')
+    setApellido(usuario?.apellido ?? '')
+  }, [usuario])
 
   const editado = nombre !== (usuario?.nombre ?? '') || apellido !== (usuario?.apellido ?? '')
 
   async function guardarPerfil(e: FormEvent) {
     e.preventDefault()
-    setMsgPerfil(null); setGuardando(true)
+    const form = e.currentTarget as HTMLFormElement
+    setAvisoPerfil(null)
+
+    const nuevos: ErroresPerfil = {}
+    if (!nombre.trim()) nuevos.nombre = 'Escribe tus nombres.'
+    if (!apellido.trim()) nuevos.apellido = 'Escribe tus apellidos.'
+    setErroresPerfil(nuevos)
+    if (Object.keys(nuevos).length) { enfocarPrimerError(form); return }
+
+    setGuardandoPerfil(true)
     try {
-      const u = await api<Usuario>('/perfil', { method: 'PUT', body: { nombre, apellido } })
+      const u = await api<Usuario>('/perfil', { method: 'PUT', body: { nombre: nombre.trim(), apellido: apellido.trim() } })
       actualizar(u)
-      setMsgPerfil({ tipo: 'ok', texto: 'Tu información fue actualizada exitosamente.' })          // CA-06
-    } catch (err) { setMsgPerfil({ tipo: 'err', texto: mensajeDe(err) }) } finally { setGuardando(false) }
+      setAvisoPerfil({ tono: 'confirmacion', texto: 'Guardamos tus datos.' })
+    } catch (err) {
+      setAvisoPerfil({ tono: 'error', texto: mensajeDe(err) })
+    } finally {
+      setGuardandoPerfil(false)
+    }
   }
 
-  function cancelar() {                                                                          // CA-07
-    setNombre(usuario?.nombre ?? ''); setApellido(usuario?.apellido ?? ''); setMsgPerfil(null)
+  function cancelar() {
+    setNombre(usuario?.nombre ?? '')
+    setApellido(usuario?.apellido ?? '')
+    setErroresPerfil({})
+    setAvisoPerfil(null)
   }
 
-  async function cambiarPw(e: FormEvent) {
+  async function cambiarPassword(e: FormEvent) {
     e.preventDefault()
-    setMsgPw(null); setGuardando(true)
+    const form = e.currentTarget as HTMLFormElement
+    setAvisoPw(null)
+
+    const nuevos: ErroresPassword = {}
+    if (!actual) nuevos.actual = 'Escribe tu contraseña actual.'
+    if (!nueva) nuevos.nueva = 'Define una contraseña nueva.'
+    else if (!PASSWORD.test(nueva)) nuevos.nueva = 'La contraseña no cumple los requisitos.'
+    if (!confirmacion) nuevos.confirmacion = 'Repite la contraseña nueva.'
+    else if (confirmacion !== nueva) nuevos.confirmacion = 'Las dos contraseñas no coinciden.'
+    setErroresPw(nuevos)
+    if (Object.keys(nuevos).length) { enfocarPrimerError(form); return }
+
+    setGuardandoPw(true)
     try {
-      const r = await api<Mensaje>('/perfil/password', { method: 'PUT', body: { passwordActual: actual, passwordNueva: nueva, confirmacionPassword: confirmacion } })
-      setMsgPw({ tipo: 'ok', texto: r.mensaje })
+      await api('/perfil/password', {
+        method: 'PUT',
+        body: { passwordActual: actual, passwordNueva: nueva, confirmacionPassword: confirmacion },
+      })
       setActual(''); setNueva(''); setConfirmacion('')
-    } catch (err) { setMsgPw({ tipo: 'err', texto: mensajeDe(err) }) } finally { setGuardando(false) }
+      navigate('/login', { replace: true, state: { aviso: 'Tu contraseña cambió. Entra de nuevo con la nueva contraseña.' } })
+      borrarSesion()
+    } catch (err) {
+      setAvisoPw({ tono: 'error', texto: mensajeDe(err) })
+      setGuardandoPw(false)
+    }
   }
 
   return (
-    <>
-      <h1>Mi perfil</h1>
-      <div className="sub">Actualiza tus datos personales o cambia tu contraseña.</div>
-      <div className="two">
-        <form className="col card" onSubmit={guardarPerfil} noValidate>
-          <h2>Datos personales</h2>
-          <div className="row keep">
-            <div className="col field"><label htmlFor="nombre">Nombres</label><input id="nombre" className="input" value={nombre} onChange={e => setNombre(e.target.value)} maxLength={30} /></div>
-            <div className="col field"><label htmlFor="apellido">Apellidos</label><input id="apellido" className="input" value={apellido} onChange={e => setApellido(e.target.value)} maxLength={50} /></div>
+    <div className="animate-subir">
+      <header className="mb-7">
+        <h1 className="text-2xl font-bold text-gris-900 sm:text-3xl">Mi perfil</h1>
+        <p className="mt-1.5 text-sm text-gris-500">Actualiza tus datos o cambia tu contraseña.</p>
+      </header>
+
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <form onSubmit={guardarPerfil} noValidate className="superficie space-y-5 p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-gris-900">Datos personales</h2>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Campo etiqueta="Nombres" error={erroresPerfil.nombre}>
+              {p => (
+                <Input {...p} value={nombre} maxLength={30} autoComplete="given-name"
+                  onChange={e => { setNombre(e.target.value); setErroresPerfil(x => ({ ...x, nombre: undefined })) }} />
+              )}
+            </Campo>
+            <Campo etiqueta="Apellidos" error={erroresPerfil.apellido}>
+              {p => (
+                <Input {...p} value={apellido} maxLength={50} autoComplete="family-name"
+                  onChange={e => { setApellido(e.target.value); setErroresPerfil(x => ({ ...x, apellido: undefined })) }} />
+              )}
+            </Campo>
           </div>
-          <div className="field"><label htmlFor="email">Correo electrónico</label>
-            <input id="email" className="input ro" value={usuario?.email ?? ''} disabled readOnly />
-            <div className="help">El correo proviene de tu cuenta de Google y no puede modificarse.</div></div>
-          {msgPerfil && <Alerta tipo={msgPerfil.tipo} style={{ marginBottom: 12 }}>{msgPerfil.texto}</Alerta>}
-          <div className="row keep">
-            <button className="btn" type="submit" disabled={!editado || guardando}>Guardar cambios</button>
-            <button className="btn ghost" type="button" onClick={cancelar} disabled={!editado}>Cancelar</button>
+
+          <div className="space-y-2">
+            <Label htmlFor={idCorreo} className="text-gris-700">Correo electrónico</Label>
+            <Input id={idCorreo} value={usuario?.email ?? ''} readOnly aria-readonly="true" aria-describedby={`${idCorreo}-ayuda`} className="bg-gris-50 text-gris-700" />
+            <p id={`${idCorreo}-ayuda`} className="text-xs text-gris-500">
+              El correo proviene de tu cuenta de Google y no puede modificarse.
+            </p>
+          </div>
+
+          <div aria-live="polite">{avisoPerfil && <Aviso tono={avisoPerfil.tono}>{avisoPerfil.texto}</Aviso>}</div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button type="submit" disabled={!editado || guardandoPerfil}>
+              {guardandoPerfil && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {guardandoPerfil ? 'Guardando' : 'Guardar cambios'}
+            </Button>
+            <Button type="button" variant="outline" onClick={cancelar} disabled={!editado || guardandoPerfil}>
+              Cancelar
+            </Button>
           </div>
         </form>
-        <form className="col card" onSubmit={cambiarPw} noValidate>
-          <h2>Cambiar contraseña</h2>
-          <div className="field"><label htmlFor="actual">Contraseña actual</label><input id="actual" className="input" type="password" autoComplete="current-password" value={actual} onChange={e => setActual(e.target.value)} /></div>
-          <div className="field"><label htmlFor="nueva">Nueva contraseña</label><input id="nueva" className="input" type="password" autoComplete="new-password" value={nueva} onChange={e => setNueva(e.target.value)} maxLength={15} />
-            <div className="help">8 a 15 caracteres, con mayúscula, minúscula, número y un carácter especial (. , + - * _ @).</div></div>
-          <div className="field"><label htmlFor="conf">Confirmar nueva contraseña</label><input id="conf" className="input" type="password" autoComplete="new-password" value={confirmacion} onChange={e => setConfirmacion(e.target.value)} maxLength={15} /></div>
-          {msgPw && <Alerta tipo={msgPw.tipo} style={{ marginBottom: 12 }}>{msgPw.texto}</Alerta>}
-          <button className="btn" type="submit" disabled={guardando || !actual || !nueva || !confirmacion}>Actualizar contraseña</button>
+
+        <form onSubmit={cambiarPassword} noValidate className="superficie space-y-5 p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-gris-900">Cambiar contraseña</h2>
+
+          <Campo etiqueta="Contraseña actual" error={erroresPw.actual}>
+            {p => (
+              <Input {...p} type="password" autoComplete="current-password" value={actual}
+                onChange={e => { setActual(e.target.value); setErroresPw(x => ({ ...x, actual: undefined })) }} />
+            )}
+          </Campo>
+
+          <Campo
+            etiqueta="Nueva contraseña"
+            error={erroresPw.nueva}
+            ayuda="De 8 a 15 caracteres, con mayúscula, minúscula, número y un signo (. , + - * _ @)."
+          >
+            {p => (
+              <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={nueva}
+                onChange={e => { setNueva(e.target.value); setErroresPw(x => ({ ...x, nueva: undefined })) }} />
+            )}
+          </Campo>
+
+          <Campo etiqueta="Confirmar nueva contraseña" error={erroresPw.confirmacion}>
+            {p => (
+              <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
+                onChange={e => { setConfirmacion(e.target.value); setErroresPw(x => ({ ...x, confirmacion: undefined })) }} />
+            )}
+          </Campo>
+
+          <div aria-live="polite">{avisoPw && <Aviso tono={avisoPw.tono}>{avisoPw.texto}</Aviso>}</div>
+
+          <p className="text-xs text-gris-500">
+            Al cambiarla cerramos tus sesiones abiertas y tendrás que entrar de nuevo.
+          </p>
+
+          <Button type="submit" disabled={guardandoPw}>
+            {guardandoPw && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {guardandoPw ? 'Actualizando' : 'Actualizar contraseña'}
+          </Button>
         </form>
       </div>
-      <div className="card soft" style={{ marginTop: 16 }}>
-        <div className="note"><b>Expiración de sesión:</b> por seguridad, la sesión se cierra automáticamente tras 2 horas sin actividad. Si eso ocurre, te pediremos iniciar sesión de nuevo.</div>
-      </div>
-    </>
+    </div>
   )
 }

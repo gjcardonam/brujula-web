@@ -1,5 +1,5 @@
-import { borrarSesion, guardarSesion, leerSesion } from '../auth/session'
-import type { Sesion } from './types'
+import { borrarSesion, guardarSesion, leerSesion } from '@/auth/session'
+import type { Sesion } from '@/api/types'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -26,7 +26,6 @@ export function alExpirarSesion(f: () => void) { oyenteSesionExpirada = f }
 let refrescando: Promise<void> | null = null
 const MINUTOS_ENTRE_REFRESCOS = 15
 
-/** HU-004 CA-05: mientras el usuario sigue activo, el token se renueva; si no hay actividad, expira. */
 async function refrescarSiConviene() {
   const s = leerSesion()
   if (!s) return
@@ -37,9 +36,16 @@ async function refrescarSiConviene() {
     try {
       const r = await fetch(`${BASE}/auth/refresh`, { method: 'POST', headers: { Authorization: `Bearer ${s.token}` } })
       if (r.ok) guardarSesion((await r.json()) as Sesion)
-    } catch { /* se reintenta en la próxima petición */ } finally { refrescando = null }
+    } catch { void 0 } finally { refrescando = null }
   })()
   return refrescando
+}
+
+function mensajePorEstado(estado: number): string {
+  if (estado >= 500) return 'El servidor no pudo responder. Intenta de nuevo en unos minutos.'
+  if (estado === 404) return 'No encontramos lo que buscabas.'
+  if (estado === 403) return 'No tienes permiso para hacer esto.'
+  return 'No fue posible completar la acción. Intenta de nuevo.'
 }
 
 export async function api<T = unknown>(path: string, opts: Opciones = {}): Promise<T> {
@@ -67,7 +73,7 @@ export async function api<T = unknown>(path: string, opts: Opciones = {}): Promi
 
   if (!res.ok) {
     const d = (datos ?? {}) as Record<string, unknown>
-    const err = new ApiError(res.status, String(d.codigo ?? 'ERROR'), String(d.mensaje ?? `Error ${res.status}`),
+    const err = new ApiError(res.status, String(d.codigo ?? 'ERROR'), String(d.mensaje ?? mensajePorEstado(res.status)),
       Array.isArray(d.detalles) ? (d.detalles as string[]) : [], d)
     if (res.status === 401 && auth && sesion) {
       borrarSesion()

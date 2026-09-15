@@ -1,29 +1,89 @@
-# Brújula · front
+# Brújula · Web
 
-Interfaz web de Brújula, plataforma gratuita de preparación para Saber 11 en matemáticas (Proyecto Integrador I · UdeA · 2026-2).
-React 18 + TypeScript + Vite. Implementa las 14 pantallas (M-01 a M-14) de los mockups del Sprint 0 y consume la API de
-[`brujula-api`](https://github.com/gjcardonam/brujula-api), donde está la guía completa de arranque y el `docker-compose.yml`.
+Interfaz de Brújula, la plataforma de preparación para la prueba Saber 11 en matemáticas.
+React 18 con Vite, TypeScript, Tailwind CSS 4 y shadcn/ui.
 
-## Desarrollo
+Proyecto Integrador I · Universidad de Antioquia · 2026-2.
+
+La API, la base de datos y el despliegue completo están en
+[brujula-api](https://github.com/gjcardonam/brujula-api).
+
+## Arrancar
+
+El sistema completo se levanta desde el otro repositorio con `docker compose up --build`.
+Para trabajar solo en el front, con la API ya corriendo:
 
 ```bash
 npm install
-npm run dev                                  # http://localhost:5173, proxy /api → http://localhost:8080
-API_TARGET=http://localhost:8081 npm run dev # si la API corre en otro puerto
-npm run build                                # verifica tipos y genera dist/
+npm run dev
 ```
 
-Variables opcionales: `VITE_GOOGLE_CLIENT_ID` (botón real de Google; sin ella, y con la API en modo desarrollo, el botón es simulado)
-y `VITE_API_URL` (por defecto `/api`).
+Vite queda en http://localhost:5173 y reenvía `/api` al backend. Si la API escucha en otro
+lado, se le indica al arrancar: `API_TARGET=http://localhost:8081 npm run dev`.
 
-## Estructura
+```bash
+npm run build
+```
 
-| Carpeta | Contenido |
-| :-- | :-- |
-| `src/api/` | cliente HTTP (token, renovación de sesión, manejo de 401) y tipos de la API |
-| `src/auth/` | sesión en `localStorage` y contexto de autenticación |
-| `src/components/` | layout con navegación por rol, componentes de UI, bloque de resolver ejercicio, botón de Google |
-| `src/pages/` | una página por pantalla: acceso (M-01 a M-03), perfil (M-04), banco (M-05/M-12), ejercicio (M-06), historial (M-07), simulacros (M-08 a M-10), estadísticas (M-11) y `admin/` (M-13, M-14) |
-| `src/styles.css` | estilos tomados de `mockups.html` del Sprint 0 |
+El build corre `tsc --noEmit` antes de empaquetar, así que un error de tipos rompe la
+compilación.
 
-La imagen Docker (`Dockerfile` + `nginx.conf`) sirve `dist/` y reenvía `/api/` al contenedor `api`.
+## Las pantallas
+
+`main` cubre el Sprint 1. Cada archivo de `src/pages` es una pantalla de los mockups
+aprobados en el Sprint 0.
+
+| Ruta | Pantalla | Mockup |
+| :-- | :-- | :-- |
+| `/login` | Inicio de sesión | M-01 |
+| `/registro` | Registro tras continuar con Google | M-02 |
+| `/recuperar` | Solicitar el enlace de recuperación | M-03 |
+| `/restablecer` | Elegir la contraseña nueva | M-03 |
+| `/perfil` | Datos personales y cambio de contraseña | M-04 |
+| `/banco` | Banco del estudiante, con filtro y paginación | M-05 |
+| `/ejercicios/:id` | Resolver, con nivel de confianza y retroalimentación | M-06 |
+| `/admin/banco` | Banco del administrador, con el estado de cada ejercicio | M-12 |
+| `/admin/ejercicios/nuevo` | Crear ejercicio | M-13 |
+
+Las pantallas de simulacros, estadísticas, historial y edición del banco pertenecen a los
+sprints siguientes y viven en la rama
+[`sprint-2`](https://github.com/gjcardonam/brujula-web/tree/sprint-2).
+
+## Cómo está organizado
+
+```
+src/
+├── api/          cliente HTTP con la sesión, y los tipos que devuelve la API
+├── auth/         contexto de sesión y su almacenamiento
+├── components/   lo que se repite entre pantallas
+│   └── ui/       los primitivos de shadcn/ui
+├── pages/        una página por pantalla
+├── utils/        fechas, foco e identificadores
+├── App.tsx       rutas y control de acceso por rol
+└── index.css     los tokens del sistema de diseño
+```
+
+El cliente de `src/api` pone el token en cada petición, renueva la sesión antes de que
+expire y reacciona cuando el backend responde que ya no es válida.
+
+## El sistema de diseño
+
+La identidad viene de los mockups: azul marino y ámbar, el logotipo **Brú**jula con la
+segunda sílaba en ámbar, tarjetas blancas sobre gris claro. Verde y rojo se reservan para
+lo que salió bien y lo que salió mal.
+
+Los colores, la tipografía y los radios se declaran una sola vez como tokens en
+`index.css`; ningún componente escribe un color a mano. La escala tipográfica es Inter
+variable, autoalojada, sin pedirle nada a un servidor externo.
+
+Tres reglas que se respetan en toda pantalla:
+
+- **Nada de texto de rúbrica.** La interfaz no explica sus propias reglas ni muestra
+  códigos de historias de usuario. Si la cuenta se bloquea, se dice en ese momento y con el
+  tiempo que falta, no como advertencia preventiva.
+- **Cuatro estados en todo lo que carga datos**: esqueleto, vacío con una acción que lo
+  resuelve, error con reintento, y contenido.
+- **Accesible**: contraste AA, foco siempre visible, navegación por teclado con flechas en
+  las opciones y en el nivel de confianza, etiquetas reales y errores anunciados.
+
+Funciona desde 360 px de ancho.

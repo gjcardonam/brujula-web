@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.3125rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.5rem;
+
+  --color-marino-900: #16304f;
+  --color-marino-800: #1e3a5f;
+  --color-marino-700: #274d7d;
+  --color-marino-50: #eef2f7;
+
+  --color-ambar-500: #f59e0b;
+  --color-ambar-600: #d97706;
+  --color-ambar-50: #fffbeb;
+
+  --color-gris-900: #111827;
+  --color-gris-700: #374151;
+  --color-gris-500: #6b7280;
+  --color-gris-300: #d1d5db;
+  --color-gris-200: #e5e7eb;
+  --color-gris-50: #f9fafb;
+
+  --color-fondo: #f3f4f6;
+  --color-superficie: #ffffff;
+
+  --color-exito-700: #15803d;
+  --color-exito-600: #16a34a;
+  --color-exito-200: #bbf7d0;
+  --color-exito-50: #f0fdf4;
+
+  --color-error-700: #b91c1c;
+  --color-error-300: #fca5a5;
+  --color-error-50: #fef2f2;
+
+  --shadow-tarjeta: 0 1px 2px rgb(16 24 40 / 0.04), 0 6px 16px -6px rgb(16 24 40 / 0.08);
+  --shadow-elevada: 0 2px 4px rgb(16 24 40 / 0.06), 0 16px 32px -12px rgb(16 24 40 / 0.16);
+
+  --animate-aparecer: aparecer 0.24s ease-out both;
+  --animate-subir: subir 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: var(--color-fondo);
+  --foreground: var(--color-gris-900);
+  --card: var(--color-superficie);
+  --card-foreground: var(--color-gris-900);
+  --popover: var(--color-superficie);
+  --popover-foreground: var(--color-gris-900);
+  --primary: var(--color-marino-800);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-marino-50);
+  --secondary-foreground: var(--color-marino-900);
+  --muted: var(--color-gris-50);
+  --muted-foreground: var(--color-gris-500);
+  --accent: var(--color-marino-50);
+  --accent-foreground: var(--color-marino-900);
+  --destructive: var(--color-error-700);
+  --border: var(--color-gris-200);
+  --input: var(--color-gris-300);
+  --ring: var(--color-marino-700);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv05", "ss01";
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  [data-panel-marino] :focus-visible {
+    outline-color: var(--color-ambar-500);
+  }
+}
+
+@layer components {
+  .superficie {
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-gris-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-tarjeta);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

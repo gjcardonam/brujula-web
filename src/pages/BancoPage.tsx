@@ -1,29 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api, mensajeDe } from '../api/client'
-import type { Componentes, EjercicioAdmin, Pagina, Tarjeta } from '../api/types'
-import { useAuth } from '../auth/AuthContext'
-import { Alerta, Cargando, Modal, Paginacion, Toast, Vacio } from '../components/ui'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { cn } from 'cn'
+import { api, mensajeDe } from '@/api/client'
+import type { Componentes, Pagina, Tarjeta } from '@/api/types'
+import { useAuth } from '@/auth/AuthContext'
+import { Aviso } from '@/components/Aviso'
+import { EstadoVacio } from '@/components/EstadoVacio'
+import { Paginacion } from '@/components/Paginacion'
+import { TarjetaEjercicio, TarjetaEjercicioAdmin, TarjetaEjercicioEsqueleto } from '@/components/TarjetaEjercicio'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
-/** M-05 (estudiante) y M-12 (administrador) · Banco de ejercicios (HU-006, HU-007, HU-008, HU-009, HU-023, HU-024). */
 export function BancoPage() {
   const { esAdmin } = useAuth()
-  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const componente = params.get('componente') ? Number(params.get('componente')) : null
   const pagina = Number(params.get('pagina') ?? 0)
 
   const [componentes, setComponentes] = useState<Componentes | null>(null)
+  const [cargandoFiltros, setCargandoFiltros] = useState(true)
   const [datos, setDatos] = useState<Pagina<Tarjeta> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [cargando, setCargando] = useState(true)
-  const [confirmar, setConfirmar] = useState<Tarjeta | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
-  const [procesando, setProcesando] = useState(false)
+  const [reintento, setReintento] = useState(0)
 
   useEffect(() => {
-    api<Componentes>('/ejercicios/componentes').then(setComponentes).catch(e => setError(mensajeDe(e)))
-  }, [datos])
+    let vivo = true
+    setCargandoFiltros(true)
+    api<Componentes>('/ejercicios/componentes')
+      .then(c => { if (vivo) setComponentes(c) })
+      .catch(() => { if (vivo) setComponentes(null) })
+      .finally(() => { if (vivo) setCargandoFiltros(false) })
+    return () => { vivo = false }
+  }, [reintento])
 
   useEffect(() => {
     let vivo = true
@@ -33,129 +43,137 @@ export function BancoPage() {
     q.set('pagina', String(pagina))
     api<Pagina<Tarjeta>>(`/ejercicios?${q}`)
       .then(d => { if (vivo) { setDatos(d); setError(null) } })
-      .catch(e => { if (vivo) setError(mensajeDe(e)) })
+      .catch(e => { if (vivo) { setError(mensajeDe(e)); setDatos(null) } })
       .finally(() => { if (vivo) setCargando(false) })
     return () => { vivo = false }
-  }, [componente, pagina])
+  }, [componente, pagina, reintento])
 
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 3500)
-    return () => clearTimeout(t)
-  }, [toast])
-
-  function filtrar(id: number | null) {                                                  // HU-007 CA-09, HU-008 CA-04
+  const filtrar = useCallback((id: number | null) => {
     const q = new URLSearchParams()
     if (id) q.set('componente', String(id))
     q.set('pagina', '0')
     setParams(q)
-  }
-  function irPagina(p: number) {                                                          // HU-008 CA-03
+  }, [setParams])
+
+  const irPagina = useCallback((p: number) => {
     const q = new URLSearchParams(params)
     q.set('pagina', String(p))
     setParams(q)
-  }
-
-  async function cambiarEstado(t: Tarjeta) {
-    const nuevo = t.estado === 'Activo' ? 'Desactivado' : 'Activo'
-    setProcesando(true)
-    try {
-      await api<EjercicioAdmin>(`/ejercicios/${t.id}/estado`, { method: 'PATCH', body: { estado: nuevo } })
-      setToast(nuevo === 'Activo' ? `El ejercicio #${t.numero} fue activado exitosamente.` : `El ejercicio #${t.numero} fue desactivado exitosamente.`)
-      setConfirmar(null)
-      setDatos(d => d ? { ...d, contenido: d.contenido.map(x => x.id === t.id ? { ...x, estado: nuevo } : x) } : d)
-    } catch (e) { setError(mensajeDe(e)); setConfirmar(null) } finally { setProcesando(false) }
-  }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [params, setParams])
 
   const nombreComponente = componentes?.componentes.find(c => c.id === componente)?.nombre
-  const vacio = datos && datos.contenido.length === 0
+  const vacio = !cargando && datos !== null && datos.contenido.length === 0
 
   return (
-    <>
-      <div className="row keep center" style={{ marginBottom: 6 }}>
-        <h1 style={{ flex: 1 }}>Banco de ejercicios</h1>
-        {esAdmin && <Link className="btn acc" to="/admin/ejercicios/nuevo">+ Crear Ejercicio</Link>}
-      </div>
-      <div className="sub">{esAdmin ? 'Consulta, crea, edita, activa o desactiva los ejercicios del banco.' : 'Filtra por componente y elige un ejercicio para practicar.'}</div>
-
-      {componentes && (
-        <div className="chips" role="group" aria-label="Filtrar por componente">
-          <button className={`chip ${componente === null ? 'on' : ''}`} onClick={() => filtrar(null)}>Todos ({componentes.total})</button>
-          {componentes.componentes.map(c => (
-            <button key={c.id} className={`chip ${componente === c.id ? 'on' : ''}`} onClick={() => filtrar(c.id)}>{c.nombre} ({c.cantidad})</button>
-          ))}
-        </div>
-      )}
-
-      {error && <Alerta style={{ marginBottom: 12 }}>{error}</Alerta>}
-      {cargando && !datos && <Cargando />}
-
-      {vacio && (
-        <Vacio>
-          {componente
-            ? `Aún no hay ejercicios disponibles para este componente${nombreComponente ? ` (${nombreComponente})` : ''}.`
-            : esAdmin ? 'Aún no hay ejercicios registrados' : 'Aún no hay ejercicios disponibles'}
-        </Vacio>
-      )}
-
-      {datos && datos.contenido.length > 0 && (
-        <div className="grid" style={{ opacity: cargando ? .6 : 1 }}>
-          {datos.contenido.map(t => (
-            <article key={t.id} className={`ex ${t.estado === 'Desactivado' ? 'off' : ''}`}>
-              <div className="n">
-                <span>Ejercicio #{t.numero}</span>
-                {esAdmin && <span className={`pill ${t.estado === 'Desactivado' ? 'off' : ''}`}>{t.estado}</span>}
-              </div>
-              <div className="m">
-                {esAdmin ? (
-                  <>{t.componente} · {t.competencia} · {t.nivel}<br />Intentos registrados: {t.intentos ?? 0}</>
-                ) : (
-                  <>Componente: {t.componente}<br />Competencia: {t.competencia}<br />Nivel: {t.nivel}</>
-                )}
-              </div>
-              <div className="a">
-                {esAdmin ? (
-                  <>
-                    <Link className="btn ghost sm" to={`/admin/ejercicios/${t.id}/editar`}>Editar</Link>
-                    <Link className="btn ghost sm" to={`/admin/ejercicios/${t.id}`}>Ver más</Link>
-                    {t.estado === 'Activo'
-                      ? <button className="btn danger sm" onClick={() => setConfirmar(t)}>Desactivar</button>
-                      : <button className="btn sm" onClick={() => setConfirmar(t)}>Activar</button>}
-                  </>
-                ) : (
-                  <button className="btn sm" onClick={() => navigate(`/ejercicios/${t.id}${componente ? `?componente=${componente}` : ''}`)}>Resolver</button>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {datos && (
-        <div style={{ marginTop: 'auto' }}>
-          <Paginacion pagina={datos.pagina} totalPaginas={datos.totalPaginas} onCambiar={irPagina} />
-          {datos.totalElementos > 0 && <div className="note" style={{ textAlign: 'center', marginTop: 8 }}>
-            Mostrando {datos.contenido.length} de {datos.totalElementos} ejercicios · máximo {datos.tamano} tarjetas por página
-          </div>}
-        </div>
-      )}
-
-      {confirmar && (
-        <Modal titulo={confirmar.estado === 'Activo' ? `¿Desactivar el ejercicio #${confirmar.numero}?` : `¿Activar el ejercicio #${confirmar.numero}?`} onCerrar={() => setConfirmar(null)}>
-          <p className="note" style={{ fontSize: 14 }}>
-            {confirmar.estado === 'Activo'
-              ? <>Dejará de estar disponible para los estudiantes. No se elimina ni se pierden sus {confirmar.intentos ?? 0} intentos.</>
-              : <>Volverá a estar disponible para los estudiantes en el banco y en los filtros.</>}
+    <div className="animate-subir">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gris-900 sm:text-3xl">Banco de ejercicios</h1>
+          <p className="mt-1.5 max-w-prose text-sm text-gris-500">
+            {esAdmin
+              ? 'Consulta los ejercicios del banco y agrega nuevos.'
+              : 'Filtra por componente y elige un ejercicio para practicar.'}
           </p>
-          <div className="row keep" style={{ marginTop: 12 }}>
-            <button className={`btn sm ${confirmar.estado === 'Activo' ? 'danger' : ''}`} disabled={procesando} onClick={() => cambiarEstado(confirmar)}>
-              {confirmar.estado === 'Activo' ? 'Desactivar' : 'Activar'}
-            </button>
-            <button className="btn ghost sm" onClick={() => setConfirmar(null)}>Cancelar</button>
-          </div>
-        </Modal>
+        </div>
+        {esAdmin && (
+          <Button asChild variant="acento">
+            <Link to="/admin/ejercicios/nuevo">
+              <Plus className="size-4" aria-hidden="true" />
+              Crear ejercicio
+            </Link>
+          </Button>
+        )}
+      </header>
+
+      {componentes ? (
+        <div role="group" aria-label="Filtrar por componente" className="mb-6 flex flex-wrap gap-2">
+          {[{ id: null as number | null, nombre: 'Todos', cantidad: componentes.total }, ...componentes.componentes].map(c => {
+            const activo = componente === c.id
+            return (
+              <button
+                key={c.id ?? 'todos'}
+                type="button"
+                aria-pressed={activo}
+                onClick={() => filtrar(c.id)}
+                className={cn(
+                  'inline-flex h-9 items-center rounded-full border px-4 text-sm transition-colors',
+                  activo
+                    ? 'border-marino-800 bg-marino-800 font-medium text-white'
+                    : 'border-gris-200 bg-superficie text-gris-700 hover:border-marino-700 hover:text-marino-900',
+                )}
+              >
+                {c.nombre}
+                <span className={cn('ml-1.5', activo ? 'text-white/65' : 'text-gris-500')}>{c.cantidad}</span>
+              </button>
+            )
+          })}
+        </div>
+      ) : cargandoFiltros ? (
+        <div className="mb-6 flex flex-wrap gap-2" aria-hidden="true">
+          {[64, 128, 96, 104].map((w, i) => <Skeleton key={i} className="h-9 rounded-full" style={{ width: w }} />)}
+        </div>
+      ) : null}
+
+      {error && (
+        <Aviso className="mb-6">
+          <p>{error}</p>
+          <button
+            type="button"
+            className="mt-2 rounded-sm font-medium underline underline-offset-4"
+            onClick={() => setReintento(n => n + 1)}
+          >
+            Reintentar
+          </button>
+        </Aviso>
       )}
-      {toast && <Toast texto={toast} />}
-    </>
+
+      <div aria-busy={cargando} aria-live="polite">
+        {cargando && (
+          <>
+            <span className="sr-only">Cargando ejercicios</span>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }, (_, i) => <TarjetaEjercicioEsqueleto key={i} />)}
+            </div>
+          </>
+        )}
+
+        {vacio && (
+          <EstadoVacio
+            titulo={componente ? 'Todavía no hay ejercicios en este componente' : 'El banco todavía está vacío'}
+            descripcion={
+              componente
+                ? `Aún no hay ejercicios de ${nombreComponente ?? 'este componente'}. Prueba con otro o mira todo el banco.`
+                : esAdmin
+                  ? 'Crea el primer ejercicio para que los estudiantes puedan practicar.'
+                  : 'Vuelve más tarde: tu profesor todavía no ha publicado ejercicios.'
+            }
+            accion={
+              componente
+                ? <Button variant="outline" onClick={() => filtrar(null)}>Ver todo el banco</Button>
+                : esAdmin
+                  ? <Button asChild variant="acento"><Link to="/admin/ejercicios/nuevo">Crear ejercicio</Link></Button>
+                  : undefined
+            }
+          />
+        )}
+
+        {!cargando && datos && datos.contenido.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {datos.contenido.map(t =>
+              esAdmin
+                ? <TarjetaEjercicioAdmin key={t.id} tarjeta={t} />
+                : <TarjetaEjercicio key={t.id} tarjeta={t} destino={`/ejercicios/${t.id}${componente ? `?componente=${componente}` : ''}`} />,
+            )}
+          </div>
+        )}
+      </div>
+
+      {!cargando && datos && datos.totalPaginas > 1 && (
+        <div className="mt-8">
+          <Paginacion pagina={datos.pagina} totalPaginas={datos.totalPaginas} onCambiar={irPagina} />
+        </div>
+      )}
+    </div>
   )
 }

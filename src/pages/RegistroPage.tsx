@@ -1,65 +1,153 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { api, mensajeDe } from '../api/client'
-import { Acceso } from '../components/Acceso'
-import { Alerta } from '../components/ui'
+import { Loader2 } from 'lucide-react'
+import { api, mensajeDe } from '@/api/client'
+import { LayoutAcceso } from '@/components/LayoutAcceso'
+import { Aviso } from '@/components/Aviso'
+import { Campo } from '@/components/Campo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { enfocarPrimerError } from '@/utils/foco'
 
 interface Estado { registroToken: string; email: string; nombre: string; apellido: string; simulado: boolean }
 
-/** M-02 · Completar el registro tras verificar el correo con Google (HU-001 CA-04 a CA-09). */
+const PASSWORD = /^(?=.*[a-záéíóúñ])(?=.*[A-ZÁÉÍÓÚÑ])(?=.*\d)(?=.*[.,+\-*_@])\S{8,15}$/
+
+type Errores = Partial<Record<'nombre' | 'apellido' | 'password' | 'confirmacion' | 'terminos', string>>
+
 export function RegistroPage() {
   const loc = useLocation()
   const navigate = useNavigate()
   const st = loc.state as Estado | null
+  const idTerminos = useId()
+
   const [nombre, setNombre] = useState(st?.nombre ?? '')
   const [apellido, setApellido] = useState(st?.apellido ?? '')
   const [password, setPassword] = useState('')
   const [confirmacion, setConfirmacion] = useState('')
-  const [terminos, setTerminos] = useState(false)                                       // CA-07: desmarcada por defecto
+  const [terminos, setTerminos] = useState(false)
+  const [errores, setErrores] = useState<Errores>({})
   const [error, setError] = useState<string | null>(null)
-  const [cargando, setCargando] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
-  if (!st?.registroToken) return <Navigate to="/login" replace />                         // CA-10: sin Google no hay registro
+  if (!st?.registroToken) return <Navigate to="/login" replace />
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
+    const form = e.currentTarget as HTMLFormElement
     setError(null)
-    if (!terminos) { setError('Debes aceptar los Términos y Condiciones y la Política de Tratamiento de Datos Personales.'); return }
-    setCargando(true)
+
+    const nuevos: Errores = {}
+    if (!nombre.trim()) nuevos.nombre = 'Escribe tus nombres.'
+    if (!apellido.trim()) nuevos.apellido = 'Escribe tus apellidos.'
+    if (!password) nuevos.password = 'Define una contraseña.'
+    else if (!PASSWORD.test(password)) nuevos.password = 'La contraseña no cumple los requisitos.'
+    if (!confirmacion) nuevos.confirmacion = 'Repite la contraseña.'
+    else if (confirmacion !== password) nuevos.confirmacion = 'Las dos contraseñas no coinciden.'
+    if (!terminos) nuevos.terminos = 'Necesitas aceptar los términos y la política de datos para continuar.'
+    setErrores(nuevos)
+    if (Object.keys(nuevos).length) { enfocarPrimerError(form); return }
+
+    setEnviando(true)
     try {
-      await api('/auth/registro', { method: 'POST', auth: false, body: {
-        registroToken: st!.registroToken, nombre, apellido, password, confirmacionPassword: confirmacion, aceptoTerminos: terminos,
-      } })
-      navigate('/login', { replace: true, state: { aviso: 'Tu cuenta fue creada exitosamente. Inicia sesión con tu correo y contraseña.', tipo: 'ok' } })   // CA-09
+      await api('/auth/registro', {
+        method: 'POST',
+        auth: false,
+        body: {
+          registroToken: st!.registroToken,
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          password,
+          confirmacionPassword: confirmacion,
+          aceptoTerminos: terminos,
+        },
+      })
+      navigate('/login', { replace: true, state: { aviso: 'Tu cuenta quedó creada. Inicia sesión con tu correo y contraseña.' } })
     } catch (err) {
       setError(mensajeDe(err))
-    } finally { setCargando(false) }
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
-    <Acceso
+    <LayoutAcceso
       texto="Ya verificamos tu cuenta de Google. Completa tus datos para crear tu cuenta de estudiante."
-      nota="No solicitamos ni guardamos la contraseña de tu cuenta de Google.">
-      <form className="card" onSubmit={enviar} noValidate>
-        <h2 style={{ fontSize: 22 }}>Completa tu registro</h2>
-        <Alerta tipo="ok" style={{ marginBottom: 14 }}>Correo verificado con Google{st.simulado ? ' (simulado)' : ''}: <b>{st.email}</b></Alerta>
-        <div className="row keep">
-          <div className="col field"><label htmlFor="nombre">Nombres</label><input id="nombre" className="input" value={nombre} onChange={e => setNombre(e.target.value)} maxLength={30} /></div>
-          <div className="col field"><label htmlFor="apellido">Apellidos</label><input id="apellido" className="input" value={apellido} onChange={e => setApellido(e.target.value)} maxLength={50} /></div>
+      nota="No solicitamos ni guardamos la contraseña de tu cuenta de Google."
+    >
+      <form onSubmit={enviar} noValidate className="superficie space-y-5 p-6 sm:p-7">
+        <h1 className="text-2xl font-bold text-gris-900">Completa tu registro</h1>
+
+        <Aviso tono="confirmacion">
+          Correo verificado con Google: <span className="font-semibold">{st.email}</span>
+        </Aviso>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Campo etiqueta="Nombres" error={errores.nombre}>
+            {p => (
+              <Input {...p} value={nombre} maxLength={30} autoComplete="given-name"
+                onChange={e => { setNombre(e.target.value); setErrores(x => ({ ...x, nombre: undefined })) }} />
+            )}
+          </Campo>
+          <Campo etiqueta="Apellidos" error={errores.apellido}>
+            {p => (
+              <Input {...p} value={apellido} maxLength={50} autoComplete="family-name"
+                onChange={e => { setApellido(e.target.value); setErrores(x => ({ ...x, apellido: undefined })) }} />
+            )}
+          </Campo>
         </div>
-        <div className="field"><label htmlFor="pw">Contraseña</label>
-          <input id="pw" className="input" type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} maxLength={15} />
-          <div className="help">8 a 15 caracteres, con mayúscula, minúscula, número y un carácter especial (. , + - * _ @).</div></div>
-        <div className="field"><label htmlFor="pw2">Confirmación de contraseña</label>
-          <input id="pw2" className="input" type="password" autoComplete="new-password" value={confirmacion} onChange={e => setConfirmacion(e.target.value)} maxLength={15} /></div>
-        <label className="chk">
-          <input type="checkbox" checked={terminos} onChange={e => setTerminos(e.target.checked)} />
-          <span>Acepto los <u>Términos y Condiciones</u> y la <u>Política de Tratamiento de Datos Personales</u>.</span>
-        </label>
-        {error && <Alerta style={{ marginBottom: 12 }}>{error}</Alerta>}
-        <button className="btn block" type="submit" disabled={cargando}>{cargando ? 'Creando cuenta…' : 'Crear cuenta'}</button>
-        <button className="btn ghost sm block" type="button" style={{ marginTop: 10 }} onClick={() => navigate('/login')}>Cancelar</button>
+
+        <Campo
+          etiqueta="Contraseña"
+          error={errores.password}
+          ayuda="De 8 a 15 caracteres, con mayúscula, minúscula, número y un signo (. , + - * _ @)."
+        >
+          {p => (
+            <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={password}
+              onChange={e => { setPassword(e.target.value); setErrores(x => ({ ...x, password: undefined })) }} />
+          )}
+        </Campo>
+
+        <Campo etiqueta="Confirmación de contraseña" error={errores.confirmacion}>
+          {p => (
+            <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
+              onChange={e => { setConfirmacion(e.target.value); setErrores(x => ({ ...x, confirmacion: undefined })) }} />
+          )}
+        </Campo>
+
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 rounded-md border border-gris-200 bg-gris-50 p-3.5">
+            <Checkbox
+              id={idTerminos}
+              checked={terminos}
+              aria-invalid={errores.terminos ? true : undefined}
+              aria-describedby={errores.terminos ? `${idTerminos}-error` : undefined}
+              onCheckedChange={v => { setTerminos(v === true); setErrores(x => ({ ...x, terminos: undefined })) }}
+              className="mt-0.5"
+            />
+            <label htmlFor={idTerminos} className="text-sm leading-snug text-gris-700">
+              Acepto los <span className="font-medium text-gris-900">Términos y Condiciones</span> y la{' '}
+              <span className="font-medium text-gris-900">Política de Tratamiento de Datos Personales</span>.
+            </label>
+          </div>
+          {errores.terminos && (
+            <p id={`${idTerminos}-error`} className="text-xs font-medium text-error-700">{errores.terminos}</p>
+          )}
+        </div>
+
+        {error && <Aviso>{error}</Aviso>}
+
+        <div className="space-y-3">
+          <Button type="submit" size="lg" className="w-full" disabled={enviando}>
+            {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {enviando ? 'Creando cuenta' : 'Crear cuenta'}
+          </Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={() => navigate('/login')}>
+            Cancelar
+          </Button>
+        </div>
       </form>
-    </Acceso>
+    </LayoutAcceso>
   )
 }

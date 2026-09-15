@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, alExpirarSesion } from '../api/client'
-import type { Sesion, Usuario } from '../api/types'
-import { actualizarUsuario, borrarSesion, guardarSesion, leerSesion, sesionVencida, suscribir, type SesionGuardada } from './session'
+import { api, alExpirarSesion } from '@/api/client'
+import type { Sesion, Usuario } from '@/api/types'
+import { actualizarUsuario, borrarSesion, guardarSesion, leerSesion, sesionVencida, suscribir, type SesionGuardada } from '@/auth/session'
 
 interface Ctx {
   sesion: SesionGuardada | null
@@ -27,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => suscribir(setSesion), [])
   useEffect(() => { alExpirarSesion(() => setSesionExpirada(true)) }, [])
 
-  // HU-004 CA-05/CA-07: si el token vence por inactividad, se avisa y se redirige al inicio de sesión.
   useEffect(() => {
     if (!sesion) return
     const t = setInterval(() => {
@@ -38,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const iniciar = useCallback((s: Sesion) => { setSesionExpirada(false); guardarSesion(s) }, [])
   const cerrar = useCallback(async () => {
-    try { await api('/auth/logout', { method: 'POST' }) } catch { /* el token se descarta igual */ }
+    try { await api('/auth/logout', { method: 'POST' }) } catch { void 0 }
     borrarSesion()
   }, [])
   const actualizar = useCallback((u: Usuario) => actualizarUsuario(u), [])

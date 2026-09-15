@@ -1,4 +1,4 @@
-import type { Sesion, Usuario } from '../api/types'
+import type { Sesion, Usuario } from '@/api/types'
 
 const CLAVE = 'brujula.sesion'
 
@@ -21,7 +21,7 @@ export function leerSesion(): SesionGuardada | null {
 
 export function guardarSesion(s: Sesion): SesionGuardada {
   const g: SesionGuardada = { token: s.token, expiraEn: s.expiraEn, emitidoEn: new Date().toISOString(), usuario: s.usuario }
-  try { localStorage.setItem(CLAVE, JSON.stringify(g)) } catch { /* sin almacenamiento */ }
+  try { localStorage.setItem(CLAVE, JSON.stringify(g)) } catch { void 0 }
   oyentes.forEach(o => o(g))
   return g
 }
@@ -30,12 +30,12 @@ export function actualizarUsuario(u: Usuario) {
   const s = leerSesion()
   if (!s) return
   const g = { ...s, usuario: u }
-  try { localStorage.setItem(CLAVE, JSON.stringify(g)) } catch { /* sin almacenamiento */ }
+  try { localStorage.setItem(CLAVE, JSON.stringify(g)) } catch { void 0 }
   oyentes.forEach(o => o(g))
 }
 
 export function borrarSesion() {
-  try { localStorage.removeItem(CLAVE) } catch { /* sin almacenamiento */ }
+  try { localStorage.removeItem(CLAVE) } catch { void 0 }
   oyentes.forEach(o => o(null))
 }
 
