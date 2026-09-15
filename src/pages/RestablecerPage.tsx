@@ -66,28 +66,28 @@ export function RestablecerPage() {
 
   return (
     <LayoutAcceso
-      texto="Define una nueva contraseña para tu cuenta."
-      nota="Al guardarla cerramos las sesiones abiertas y tendrás que iniciar sesión de nuevo."
+      texto="Define una contraseña nueva y vuelve a tu ruta de práctica."
+      nota="Al guardarla cerramos las sesiones abiertas y tendrás que entrar de nuevo."
     >
-      <form onSubmit={enviar} noValidate className="superficie space-y-5 p-6 sm:p-7">
-        <h1 className="text-2xl font-bold text-gris-900">Definir nueva contraseña</h1>
+      <form onSubmit={enviar} noValidate className="panel space-y-6 p-6 sm:p-8">
+        <h1 className="text-2xl font-bold text-marino-800">Elige una contraseña nueva</h1>
 
         {valido === null && (
           <div className="space-y-5" aria-live="polite" aria-busy="true">
             <span className="sr-only">Validando el enlace</span>
             <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-12 w-full rounded-control" />
             <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-12 w-full rounded-control" />
+            <Skeleton className="h-13 w-full rounded-control-lg" />
           </div>
         )}
 
         {valido === false && (
           <>
             <Aviso>{error}</Aviso>
-            <Button asChild size="lg" className="w-full">
-              <Link to="/recuperar">Solicitar un nuevo enlace</Link>
+            <Button asChild size="bloque">
+              <Link to="/recuperar">Solicitar un enlace nuevo</Link>
             </Button>
           </>
         )}
@@ -95,7 +95,7 @@ export function RestablecerPage() {
         {valido === true && (
           <>
             <Campo
-              etiqueta="Nueva contraseña"
+              etiqueta="Contraseña"
               error={errores.password}
               ayuda="De 8 a 15 caracteres, con mayúscula, minúscula, número y un signo (. , + - * _ @)."
             >
@@ -105,7 +105,7 @@ export function RestablecerPage() {
               )}
             </Campo>
 
-            <Campo etiqueta="Confirmar nueva contraseña" error={errores.confirmacion}>
+            <Campo etiqueta="Repite la contraseña" error={errores.confirmacion}>
               {p => (
                 <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
                   onChange={e => { setConfirmacion(e.target.value); setErrores(x => ({ ...x, confirmacion: undefined })) }} />
@@ -114,8 +114,8 @@ export function RestablecerPage() {
 
             {error && <Aviso>{error}</Aviso>}
 
-            <Button type="submit" size="lg" className="w-full" disabled={enviando}>
-              {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            <Button type="submit" size="bloque" disabled={enviando}>
+              {enviando && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
               {enviando ? 'Guardando' : 'Guardar contraseña'}
             </Button>
           </>

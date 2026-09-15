@@ -1,60 +1,67 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, ChevronRight, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from 'cn'
 import { api, ApiError, mensajeDe } from '@/api/client'
 import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
+import { IconoComponente, tonoDeComponente } from '@/components/Componente'
+import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
 import { SelectorDeConfianza } from '@/components/SelectorDeConfianza'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fechaHora } from '@/utils/formato'
 import { uuid } from '@/utils/uuid'
 
-function estiloOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null) {
+interface EstiloOpcion { caja: string; ficha: string; texto: string }
+
+function estiloOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null): EstiloOpcion {
   if (!resultado) {
     return seleccion === o.id
-      ? 'border-marino-800 bg-marino-50 ring-1 ring-marino-800'
-      : 'border-gris-200 bg-superficie hover:border-marino-700 hover:bg-marino-50/60'
+      ? {
+          caja: 'border-violeta-600 bg-violeta-50',
+          ficha: 'bg-violeta-600 text-white',
+          texto: 'text-violeta-700',
+        }
+      : {
+          caja: 'border-borde-fuerte bg-superficie hover:border-marino-200 active:translate-y-[3px] active:border-b-2',
+          ficha: 'bg-hueso text-texto-suave',
+          texto: 'text-marino-800',
+        }
   }
-  if (o.id === resultado.idOpcionCorrecta) return 'border-exito-600 bg-exito-50'
-  if (o.id === resultado.idOpcionSeleccionada) return 'border-error-700 bg-error-50'
-  return 'border-gris-200 bg-superficie opacity-70'
+  if (o.id === resultado.idOpcionCorrecta) {
+    return { caja: 'border-exito-600 bg-exito-50', ficha: 'bg-exito-600 text-white', texto: 'text-exito-700' }
+  }
+  if (o.id === resultado.idOpcionSeleccionada) {
+    return { caja: 'border-error-600 bg-error-50', ficha: 'bg-error-600 text-white', texto: 'text-error-700' }
+  }
+  return { caja: 'border-borde-fuerte bg-superficie opacity-55', ficha: 'bg-hueso text-texto-suave', texto: 'text-marino-800' }
 }
 
-function Punto({ marcado, tono }: { marcado: boolean; tono: 'neutro' | 'exito' | 'error' }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-        tono === 'exito' ? 'border-exito-600' : tono === 'error' ? 'border-error-700' : marcado ? 'border-marino-800' : 'border-gris-300',
-      )}
-    >
-      {marcado && (
-        <span className={cn('size-2 rounded-full', tono === 'exito' ? 'bg-exito-600' : tono === 'error' ? 'bg-error-700' : 'bg-marino-800')} />
-      )}
-    </span>
-  )
+function etiquetaOpcion(o: OpcionEstudiante, resultado: ResultadoIntento | null) {
+  if (!resultado) return null
+  if (o.id === resultado.idOpcionCorrecta) return { texto: 'Respuesta correcta', color: 'text-exito-700' }
+  if (o.id === resultado.idOpcionSeleccionada) return { texto: 'Tu respuesta', color: 'text-error-700' }
+  return null
 }
 
 function Esqueleto() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-      <div className="superficie space-y-4 p-5 sm:p-6">
-        <Skeleton className="h-3.5 w-52" />
-        <Skeleton className="h-7 w-40" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-11/12" />
-        <div className="space-y-3 pt-3">
-          {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}
-        </div>
+    <div className="w-full max-w-[820px]">
+      <Skeleton className="h-8 w-full rounded-control" />
+      <Skeleton className="mt-3 h-8 w-4/5 rounded-control" />
+      <div className="mt-8 grid gap-3.5 sm:grid-cols-2">
+        {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-[82px] w-full rounded-tarjeta" />)}
       </div>
-      <div className="superficie space-y-3 p-5 sm:p-6">
-        <Skeleton className="h-5 w-44" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
+      <Skeleton className="mt-7 h-[100px] w-full rounded-[20px]" />
+    </div>
+  )
+}
+
+function Marco({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-fondo px-5 py-10">
+      <div className="panel w-full max-w-lg p-7 text-center sm:p-9">{children}</div>
     </div>
   )
 }
@@ -77,6 +84,7 @@ export function EjercicioPage() {
   const [buscandoSiguiente, setBuscandoSiguiente] = useState(false)
   const [sinMas, setSinMas] = useState<string | null>(null)
   const [token, setToken] = useState(() => uuid())
+  const [altoFranja, setAltoFranja] = useState(0)
 
   const cargar = useCallback(() => {
     setEjercicio(null); setError(null); setNoDisponible(false)
@@ -95,7 +103,16 @@ export function EjercicioPage() {
   useEffect(() => {
     if (!resultado) return
     refResultado.current?.focus({ preventScroll: true })
-    refResultado.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [resultado])
+
+  useEffect(() => {
+    const el = refResultado.current
+    if (!el || !resultado) { setAltoFranja(0); return }
+    const medir = () => setAltoFranja(el.offsetHeight)
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(el)
+    return () => observador.disconnect()
   }, [resultado])
 
   const volver = `/banco${componente ? `?componente=${componente}` : ''}`
@@ -151,210 +168,214 @@ export function EjercicioPage() {
 
   if (noDisponible) {
     return (
-      <div className="superficie mx-auto max-w-lg p-6 text-center sm:p-8">
-        <h1 className="text-xl font-semibold text-gris-900">Este ejercicio ya no está disponible</h1>
-        <p className="mt-2 text-sm text-gris-500">Fue retirado del banco. Elige otro y sigue practicando.</p>
-        <Button asChild className="mt-6">
-          <Link to={volver}>Volver al banco</Link>
+      <Marco>
+        <h1 className="text-xl font-bold text-marino-800">Este ejercicio ya no está disponible</h1>
+        <p className="mt-2.5 text-base text-texto-suave">Fue retirado del banco. Elige otro y sigue practicando.</p>
+        <Button asChild className="mt-7">
+          <Link to={volver}>Volver a la ruta</Link>
         </Button>
-      </div>
+      </Marco>
     )
   }
 
   if (error && !ejercicio) {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
-        <Aviso>{error}</Aviso>
-        <div className="flex gap-3">
+      <Marco>
+        <Aviso className="text-left">{error}</Aviso>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button onClick={cargar}>Reintentar</Button>
-          <Button asChild variant="outline"><Link to={volver}>Volver al banco</Link></Button>
+          <Button asChild variant="contorno"><Link to={volver}>Volver a la ruta</Link></Button>
         </div>
-      </div>
-    )
-  }
-
-  if (!ejercicio) {
-    return (
-      <div aria-busy="true" aria-live="polite">
-        <span className="sr-only">Cargando el ejercicio</span>
-        <Esqueleto />
-      </div>
+      </Marco>
     )
   }
 
   const respondido = resultado !== null
-  const indiceFoco = seleccion ? ejercicio.opciones.findIndex(o => o.id === seleccion) : 0
+  const tono = tonoDeComponente(ejercicio?.componente.nombre)
+  const opcionCorrecta = resultado && ejercicio
+    ? ejercicio.opciones.find(o => o.id === resultado.idOpcionCorrecta) ?? null
+    : null
+  const indiceFoco = ejercicio && seleccion ? ejercicio.opciones.findIndex(o => o.id === seleccion) : 0
 
   return (
-    <div className="grid animate-subir items-start gap-6 lg:grid-cols-[1.35fr_1fr]">
-      <section className="superficie p-5 sm:p-6">
-        <nav aria-label="Ruta" className="flex flex-wrap items-center gap-1 text-xs text-gris-500">
-          <Link to={volver} className="rounded-sm hover:text-marino-700 hover:underline">Banco</Link>
-          <ChevronRight className="size-3" aria-hidden="true" />
-          <span>{ejercicio.componente.nombre}</span>
-          <ChevronRight className="size-3" aria-hidden="true" />
-          <span aria-current="page" className="text-gris-700">Ejercicio #{ejercicio.numero}</span>
-        </nav>
-
-        <h1 className="mt-3 text-2xl font-bold text-gris-900">Ejercicio #{ejercicio.numero}</h1>
-        <p className="mt-1 text-sm text-gris-500">
-          {ejercicio.componente.nombre} · {ejercicio.competencia.nombre} · {ejercicio.nivel}
-        </p>
-
-        <p className="mt-5 whitespace-pre-wrap text-base leading-relaxed text-gris-900">{ejercicio.enunciado}</p>
-
-        {ejercicio.imagenEnunciado && (
-          <img
-            src={ejercicio.imagenEnunciado}
-            alt="Ilustración del enunciado"
-            className="mt-4 max-h-80 w-full rounded-md border border-gris-200 object-contain"
-          />
+    <div className="flex min-h-screen flex-col bg-fondo">
+      <header className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-3 px-5 py-3 sm:px-10">
+        <Link
+          to={volver}
+          className="inline-flex items-center gap-2.5 text-base font-bold text-texto-suave transition-colors hover:text-marino-800"
+        >
+          <ArrowLeft className="size-[18px]" strokeWidth={2.5} aria-hidden="true" />
+          Salir de la práctica
+        </Link>
+        {ejercicio && (
+          <span
+            className={cn('ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold max-sm:ml-0', tono.pildora)}
+          >
+            <IconoComponente nombre={ejercicio.componente.nombre} className="size-[15px]" />
+            {ejercicio.componente.nombre} · {ejercicio.nivel}
+          </span>
         )}
+      </header>
 
-        <div role="radiogroup" aria-label="Opciones de respuesta" className="mt-6 space-y-2.5">
-          {ejercicio.opciones.map((o, i) => {
-            const marcado = resultado
-              ? o.id === resultado.idOpcionSeleccionada || o.id === resultado.idOpcionCorrecta
-              : seleccion === o.id
-            const tono = !resultado
-              ? 'neutro'
-              : o.id === resultado.idOpcionCorrecta
-                ? 'exito'
-                : o.id === resultado.idOpcionSeleccionada ? 'error' : 'neutro'
-            return (
-              <button
-                key={o.id}
-                type="button"
-                ref={el => { refOpciones.current[i] = el }}
-                role="radio"
-                aria-checked={seleccion === o.id}
-                tabIndex={respondido ? -1 : i === Math.max(0, indiceFoco) ? 0 : -1}
-                disabled={respondido || enviando}
-                onClick={() => setSeleccion(o.id)}
-                onKeyDown={e => teclasOpciones(e, i)}
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-md border px-4 py-3 text-left text-sm transition-all disabled:cursor-default',
-                  estiloOpcion(o, seleccion, resultado),
-                )}
-              >
-                <Punto marcado={marcado} tono={tono as 'neutro' | 'exito' | 'error'} />
-                <span className="min-w-0 flex-1">
-                  <span className="text-gris-900">
-                    <span className="font-semibold">{o.letra}.</span> {o.descripcion}
-                  </span>
-                  {resultado && o.id === resultado.idOpcionCorrecta && (
-                    <span className="ml-2 font-semibold text-exito-700">— respuesta correcta</span>
-                  )}
-                  {resultado && o.id === resultado.idOpcionSeleccionada && !resultado.esCorrecto && (
-                    <span className="ml-2 font-semibold text-error-700">— tu respuesta</span>
-                  )}
-                  {o.imagen && (
-                    <img src={o.imagen} alt={`Opción ${o.letra}`} className="mt-2 max-h-28 rounded-sm border border-gris-200" />
-                  )}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-gris-200 pt-5">
-          <p className="max-w-[16rem] text-sm text-gris-700">
-            {respondido ? '¿Qué tan seguro estabas?' : '¿Qué tan seguro estás?'}
-            <span className="block text-xs text-gris-500">1 es nada, 5 es muy seguro</span>
-          </p>
-          <SelectorDeConfianza
-            valor={confianza}
-            onCambiar={setConfianza}
-            disabled={respondido || enviando}
-            etiqueta="Nivel de confianza"
-          />
-        </div>
-
-        {error && <Aviso className="mt-5">{error}</Aviso>}
-        {sinMas && <Aviso tono="informacion" className="mt-5">{sinMas}</Aviso>}
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          {!respondido ? (
-            <>
-              <Button type="button" onClick={confirmar} disabled={seleccion === null || confianza === null || enviando}>
-                {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-                {enviando ? 'Registrando' : 'Confirmar respuesta'}
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to={volver}>
-                  <ArrowLeft className="size-4" aria-hidden="true" />
-                  Volver al banco
-                </Link>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button type="button" onClick={siguiente} disabled={buscandoSiguiente || sinMas !== null}>
-                {buscandoSiguiente && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-                Siguiente ejercicio
-                {!buscandoSiguiente && <ArrowRight className="size-4" aria-hidden="true" />}
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={volver}>
-                  <ArrowLeft className="size-4" aria-hidden="true" />
-                  Volver al banco
-                </Link>
-              </Button>
-            </>
-          )}
-        </div>
-      </section>
-
-      <div ref={refResultado} tabIndex={-1} aria-live="polite" className="space-y-4 focus:outline-none">
-        {resultado ? (
-          <>
-            <section
-              className={cn(
-                'superficie animate-subir border-l-4 p-5 sm:p-6',
-                resultado.esCorrecto ? 'border-l-exito-600' : 'border-l-error-700',
-              )}
-            >
-              <h2 className={cn('text-xl font-semibold', resultado.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
-                {resultado.esCorrecto ? 'Respuesta correcta' : 'Respuesta incorrecta'}
-              </h2>
-              {resultado.retroalimentacionDisponible ? (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gris-700">
-                  <strong className="font-semibold text-gris-900">
-                    {resultado.esCorrecto ? 'Por qué es correcta: ' : 'Por qué no es correcta: '}
-                  </strong>
-                  {resultado.retroalimentacion}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm leading-relaxed text-gris-500">
-                  Todavía no hay una explicación escrita para la opción que elegiste.
-                </p>
-              )}
-            </section>
-
-            <section className="superficie p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-gris-900">Tu intento quedó registrado</h2>
-              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-                <dt className="text-gris-500">Fecha</dt>
-                <dd className="text-gris-700">{fechaHora(resultado.respondidoEn)}</dd>
-                <dt className="text-gris-500">Confianza</dt>
-                <dd className="text-gris-700">{resultado.nivelConfianza} de 5</dd>
-                <dt className="text-gris-500">Intento</dt>
-                <dd className="text-gris-700">{resultado.numeroIntento} de este ejercicio</dd>
-              </dl>
-            </section>
-          </>
+      <main
+        className="flex flex-1 flex-col items-center px-5 pt-5 pb-12 sm:px-10"
+        style={altoFranja ? { paddingBottom: altoFranja + 32 } : undefined}
+      >
+        {!ejercicio ? (
+          <div aria-busy="true" aria-live="polite" className="my-auto w-full max-w-[820px]">
+            <span className="sr-only">Cargando el ejercicio</span>
+            <Esqueleto />
+          </div>
         ) : (
-          <section className="superficie bg-marino-50/60 p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-marino-900">Al confirmar verás por qué</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gris-700">
-              Te explicamos la opción que elegiste, no solo si acertaste.
-            </p>
+          <div className="my-auto w-full max-w-[820px] animate-entrar">
             {ejercicio.intentosPrevios > 0 && (
-              <p className="mt-3 text-sm text-gris-500">
-                Ya resolviste este ejercicio {ejercicio.intentosPrevios} {ejercicio.intentosPrevios === 1 ? 'vez' : 'veces'}.
+              <p className="mb-3 text-xs font-bold tracking-[0.08em] text-texto-suave uppercase">
+                Ya lo resolviste {ejercicio.intentosPrevios} {ejercicio.intentosPrevios === 1 ? 'vez' : 'veces'}
               </p>
             )}
-          </section>
+
+            <h1 className="text-2xl leading-[1.35] font-semibold text-marino-800 [text-wrap:pretty] sm:text-[29px]">
+              {ejercicio.enunciado}
+            </h1>
+
+            {ejercicio.imagenEnunciado && (
+              <img
+                src={ejercicio.imagenEnunciado}
+                alt="Ilustración del enunciado"
+                className="mt-6 max-h-80 w-full rounded-tarjeta border border-borde object-contain"
+              />
+            )}
+
+            <div role="radiogroup" aria-label="Opciones de respuesta" className="mt-7 grid gap-3.5 sm:grid-cols-2">
+              {ejercicio.opciones.map((o, i) => {
+                const est = estiloOpcion(o, seleccion, resultado)
+                const etiqueta = etiquetaOpcion(o, resultado)
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    ref={el => { refOpciones.current[i] = el }}
+                    role="radio"
+                    aria-checked={seleccion === o.id}
+                    tabIndex={respondido ? -1 : i === Math.max(0, indiceFoco) ? 0 : -1}
+                    disabled={respondido || enviando}
+                    onClick={() => setSeleccion(o.id)}
+                    onKeyDown={e => teclasOpciones(e, i)}
+                    className={cn(
+                      'flex items-center gap-4 rounded-tarjeta border-2 border-b-[5px] px-5 py-5 text-left transition-[transform,border-color,background-color,opacity] disabled:cursor-default',
+                      est.caja,
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn('grid size-[34px] shrink-0 place-items-center rounded-ficha font-titular text-sm font-bold', est.ficha)}
+                    >
+                      {o.letra}
+                    </span>
+                    <span className={cn('min-w-0 flex-1 text-lg font-semibold', est.texto)}>
+                      {o.descripcion}
+                      {o.imagen && (
+                        <img src={o.imagen} alt={`Opción ${o.letra}`} className="mt-2.5 max-h-28 rounded-ficha border border-borde" />
+                      )}
+                    </span>
+                    {etiqueta && (
+                      <span
+                        className={cn(
+                          'max-w-[84px] shrink-0 text-right text-[11px] leading-[1.25] font-bold tracking-[0.06em] uppercase sm:max-w-none',
+                          etiqueta.color,
+                        )}
+                      >
+                        {etiqueta.texto}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="tarjeta mt-6 flex flex-col gap-5 rounded-[20px] px-6 py-5 sm:flex-row sm:items-center sm:gap-[22px]">
+              <div className="shrink-0">
+                <p className="font-titular text-md font-bold tracking-[-0.02em] text-marino-800">
+                  {respondido ? '¿Qué tan seguro estabas?' : '¿Qué tan seguro estás?'}
+                </p>
+                <p className="text-xs text-texto-suave">Nos dice por qué fallaste, no solo que fallaste</p>
+              </div>
+              <div className="flex flex-1 sm:justify-end">
+                <SelectorDeConfianza
+                  valor={confianza}
+                  onCambiar={setConfianza}
+                  disabled={respondido || enviando}
+                  etiqueta="Nivel de confianza, de 1 a 5"
+                />
+              </div>
+            </div>
+
+            {error && <Aviso className="mt-6">{error}</Aviso>}
+
+            {!respondido && (
+              <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-texto-suave">
+                  {seleccion === null
+                    ? 'Elige una opción para continuar.'
+                    : confianza === null
+                      ? 'Marca qué tan seguro estás de tu respuesta.'
+                      : 'Al confirmar te explicamos la opción que elegiste.'}
+                </p>
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={confirmar}
+                  disabled={seleccion === null || confianza === null || enviando}
+                  className="max-sm:w-full"
+                >
+                  {enviando && <Loader2 className="animate-spin" aria-hidden="true" />}
+                  {enviando ? 'Registrando' : 'Confirmar respuesta'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      <div ref={refResultado} tabIndex={-1} aria-live="polite" className="fixed inset-x-0 bottom-0 z-30 outline-none">
+        {resultado && (
+          <FranjaDeCorreccion
+            correcto={resultado.esCorrecto}
+            titulo={resultado.esCorrecto ? 'Respuesta correcta' : 'No es la respuesta correcta'}
+            detalle={
+              <>
+                {resultado.retroalimentacionDisponible
+                  ? resultado.retroalimentacion
+                  : 'Todavía no hay una explicación escrita para la opción que elegiste.'}
+                {!resultado.esCorrecto && opcionCorrecta && (
+                  <>
+                    {' '}La respuesta correcta es{' '}
+                    <strong>
+                      {opcionCorrecta.letra}
+                      {opcionCorrecta.descripcion ? `. ${opcionCorrecta.descripcion}` : ''}
+                    </strong>.
+                  </>
+                )}
+              </>
+            }
+            nota={
+              sinMas ??
+              `Intento ${resultado.numeroIntento} · ${fechaHora(resultado.respondidoEn)} · confianza ${resultado.nivelConfianza} de 5`
+            }
+            accion={
+              sinMas ? (
+                <Button asChild size="lg" className="max-sm:w-full">
+                  <Link to={volver}>Volver a la ruta</Link>
+                </Button>
+              ) : (
+                <Button type="button" size="lg" onClick={siguiente} disabled={buscandoSiguiente} className="max-sm:w-full">
+                  {buscandoSiguiente && <Loader2 className="animate-spin" aria-hidden="true" />}
+                  Siguiente
+                  {!buscandoSiguiente && <ArrowRight aria-hidden="true" strokeWidth={2.5} />}
+                </Button>
+              )
+            }
+          />
         )}
       </div>
     </div>

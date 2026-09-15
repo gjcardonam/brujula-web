@@ -41,10 +41,11 @@ export default function App() {
         <Route path="/recuperar" element={<RecuperarPage />} />
         <Route path="/restablecer" element={<RestablecerPage />} />
 
+        <Route path="/ejercicios/:id" element={<Privado rol="Estudiante"><EjercicioPage /></Privado>} />
+
         <Route element={<Privado><BarraSuperior /></Privado>}>
           <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/banco" element={<Privado rol="Estudiante"><BancoPage /></Privado>} />
-          <Route path="/ejercicios/:id" element={<Privado rol="Estudiante"><EjercicioPage /></Privado>} />
           <Route path="/admin/banco" element={<Privado rol="Administrador"><BancoPage /></Privado>} />
           <Route path="/admin/ejercicios/nuevo" element={<Privado rol="Administrador"><CrearEjercicioPage /></Privado>} />
         </Route>
@@ -53,19 +54,19 @@ export default function App() {
       </Routes>
 
       <Dialog open={sesionExpirada}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[420px]">
+        <DialogContent showCloseButton={false} className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>Tu sesión expiró</DialogTitle>
             <DialogDescription>
-              Por seguridad cerramos tu sesión después de un rato sin actividad. Vuelve a iniciar sesión para continuar.
+              Por seguridad cerramos tu sesión después de un rato sin actividad. Entra de nuevo para seguir practicando.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <Button
-              className="w-full"
+              size="bloque"
               onClick={() => { descartarExpirada(); navigate('/login', { replace: true }) }}
             >
-              Ir a iniciar sesión
+              Volver a entrar
             </Button>
           </DialogFooter>
         </DialogContent>

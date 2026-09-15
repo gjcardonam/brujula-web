@@ -29,16 +29,14 @@ export function Campo({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label htmlFor={id} className="text-gris-700">{etiqueta}</Label>
+      <Label htmlFor={id}>{etiqueta}</Label>
       {children({
         id,
         ...(error ? { 'aria-invalid': true as const } : {}),
         ...(descrito ? { 'aria-describedby': descrito } : {}),
       })}
-      {ayuda && <p id={idAyuda} className="text-xs text-gris-500">{ayuda}</p>}
-      {error && (
-        <p id={idError} className="text-xs font-medium text-error-700">{error}</p>
-      )}
+      {ayuda && <p id={idAyuda} className="text-xs text-texto-suave">{ayuda}</p>}
+      {error && <p id={idError} className="text-xs font-bold text-error-700">{error}</p>}
     </div>
   )
 }

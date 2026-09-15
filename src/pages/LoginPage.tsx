@@ -72,11 +72,11 @@ export function LoginPage() {
 
   return (
     <LayoutAcceso
-      texto={<>Prepárate para la prueba Saber 11 en matemáticas con retroalimentación que te dice <strong className="font-semibold text-white">por qué</strong> te equivocaste, no solo si acertaste.</>}
-      nota="Gratis · Alineada a los componentes y competencias del ICFES"
+      texto={<>Prepárate para la prueba Saber 11 en matemáticas con una práctica que te dice <strong className="font-bold text-white">por qué</strong> te equivocaste, no solo si acertaste.</>}
+      nota="Gratis, alineada a los componentes y competencias del ICFES."
     >
-      <form onSubmit={enviar} noValidate className="superficie space-y-5 p-6 sm:p-7">
-        <h1 className="text-2xl font-bold text-gris-900">Iniciar sesión</h1>
+      <form onSubmit={enviar} noValidate className="panel space-y-6 p-6 sm:p-8">
+        <h1 className="text-2xl font-bold text-marino-800">Entrar</h1>
 
         {confirmacion && <Aviso tono="confirmacion">{confirmacion}</Aviso>}
 
@@ -87,6 +87,7 @@ export function LoginPage() {
               type="email"
               autoComplete="username"
               autoFocus
+              placeholder="tu.correo@gmail.com"
               value={email}
               onChange={e => { setEmail(e.target.value); setErrores(x => ({ ...x, email: undefined })) }}
             />
@@ -107,22 +108,22 @@ export function LoginPage() {
 
         {error && <Aviso>{error}</Aviso>}
 
-        <div className="space-y-3">
-          <Button type="submit" size="lg" className="w-full" disabled={enviando}>
-            {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {enviando ? 'Validando' : 'Iniciar sesión'}
+        <div className="space-y-4">
+          <Button type="submit" size="bloque" disabled={enviando}>
+            {enviando && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
+            {enviando ? 'Validando' : 'Entrar'}
           </Button>
           <div className="text-center">
-            <Link to="/recuperar" className="rounded-sm text-sm text-marino-700 underline underline-offset-4 hover:text-marino-900">
+            <Link to="/recuperar" className="text-sm font-bold text-marino-700 underline decoration-2 underline-offset-4 hover:text-violeta-600">
               ¿Olvidaste tu contraseña?
             </Link>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-gris-500">
-          <span className="h-px flex-1 bg-gris-200" />
+        <div className="flex items-center gap-3 text-xs text-texto-suave">
+          <span className="h-px flex-1 bg-borde" />
           ¿Aún no tienes cuenta?
-          <span className="h-px flex-1 bg-gris-200" />
+          <span className="h-px flex-1 bg-borde" />
         </div>
 
         <GoogleButton onCredential={conGoogle} onError={errorGoogle} />

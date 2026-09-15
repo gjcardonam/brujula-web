@@ -4,36 +4,32 @@ import { cn } from "cn"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2.5 font-titular font-bold tracking-[-0.01em] whitespace-nowrap outline-none transition-[transform,box-shadow,background-color,border-color,color] select-none disabled:pointer-events-none disabled:opacity-55 disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[1.15em]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        principal:
+          "bg-marino-800 text-white shadow-[0_4px_0_var(--color-marino-900)] hover:bg-marino-700 active:translate-y-[2px] active:shadow-[0_2px_0_var(--color-marino-900)]",
         acento:
-          "bg-ambar-500 text-gris-900 hover:bg-ambar-600 focus-visible:ring-ambar-600/40",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-ambar-500 text-marino-800 shadow-[0_4px_0_var(--color-ambar-700)] hover:bg-ambar-600 active:translate-y-[2px] active:shadow-[0_2px_0_var(--color-ambar-700)]",
+        contorno:
+          "border-2 border-borde-fuerte bg-superficie text-marino-800 shadow-[0_3px_0_var(--color-borde-fuerte)] hover:border-marino-200 active:translate-y-[2px] active:shadow-[0_1px_0_var(--color-borde-fuerte)]",
+        fantasma:
+          "text-texto-suave hover:bg-hueso hover:text-marino-800",
+        enlace:
+          "font-sans font-bold text-marino-700 underline decoration-2 underline-offset-4 hover:text-violeta-600",
       },
       size: {
-        default: "h-10 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-11 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        sm: "h-10 rounded-control px-4 text-sm",
+        default: "h-12 rounded-control px-6 text-md",
+        lg: "h-14 rounded-control-lg px-8 text-md",
+        bloque: "h-13 w-full rounded-control-lg px-6 text-md",
+        icono: "size-10 rounded-control",
+        "icono-sm": "size-9 rounded-ficha [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "principal",
       size: "default",
     },
   }
@@ -41,7 +37,7 @@ const buttonVariants = cva(
 
 function Button({
   className,
-  variant = "default",
+  variant = "principal",
   size = "default",
   asChild = false,
   ...props

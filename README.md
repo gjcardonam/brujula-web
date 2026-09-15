@@ -68,13 +68,20 @@ expire y reacciona cuando el backend responde que ya no es válida.
 
 ## El sistema de diseño
 
-La identidad viene de los mockups: azul marino y ámbar, el logotipo **Brú**jula con la
-segunda sílaba en ámbar, tarjetas blancas sobre gris claro. Verde y rojo se reservan para
-lo que salió bien y lo que salió mal.
+La dirección se llama **Ruta** y está descrita en la skill `ui-brujula`, con dos artboards
+aprobados como fuente de verdad del aspecto. La sensación es la de una app de estudio:
+fondo hueso cálido, paneles muy redondeados, botones con borde inferior sólido que baja al
+presionarse, un color por componente (violeta para álgebra y cálculo, teal para geometría,
+ocre para estadística) y la corrección como el momento importante de la pantalla.
+
+El banco del estudiante es una ruta: un panel marino con el ejercicio por el que empezar y
+una fila por componente con sus nodos. Los nodos son el índice de ejercicios, no una barra
+de progreso: mientras no exista el historial no se dibuja ningún avance.
 
 Los colores, la tipografía y los radios se declaran una sola vez como tokens en
-`index.css`; ningún componente escribe un color a mano. La escala tipográfica es Inter
-variable, autoalojada, sin pedirle nada a un servidor externo.
+`index.css`; ningún componente escribe un color a mano. Outfit para titulares y números y
+Nunito Sans para el texto, las dos autoalojadas con `@fontsource-variable`, sin pedirle
+nada a un servidor externo.
 
 Tres reglas que se respetan en toda pantalla:
 

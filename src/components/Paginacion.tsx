@@ -18,25 +18,25 @@ function rango(pagina: number, total: number): (number | 'salto')[] {
 }
 
 const base =
-  'inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2.5 text-sm transition-colors disabled:pointer-events-none disabled:opacity-40'
+  'inline-flex h-11 min-w-11 items-center justify-center rounded-ficha border-2 px-3 font-titular text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40'
 
 export function Paginacion({ pagina, totalPaginas, onCambiar }: { pagina: number; totalPaginas: number; onCambiar: (p: number) => void }) {
   if (totalPaginas <= 1) return null
   return (
-    <nav aria-label="Paginación del banco" className="flex flex-wrap items-center justify-center gap-1.5">
+    <nav aria-label="Paginación del banco" className="flex flex-wrap items-center justify-center gap-2">
       <button
         type="button"
-        className={cn(base, 'border-gris-200 bg-superficie text-gris-700 hover:bg-marino-50')}
+        className={cn(base, 'border-borde-fuerte bg-superficie text-marino-800 hover:border-marino-200')}
         disabled={pagina === 0}
         onClick={() => onCambiar(pagina - 1)}
       >
-        <ChevronLeft className="size-4" aria-hidden="true" />
+        <ChevronLeft className="size-[18px]" aria-hidden="true" />
         <span className="sr-only">Página anterior</span>
       </button>
 
       {rango(pagina, totalPaginas).map((p, i) =>
         p === 'salto' ? (
-          <span key={`salto-${i}`} aria-hidden="true" className="px-1 text-sm text-gris-500">…</span>
+          <span key={`salto-${i}`} aria-hidden="true" className="px-1 text-texto-tenue">…</span>
         ) : (
           <button
             key={p}
@@ -46,8 +46,8 @@ export function Paginacion({ pagina, totalPaginas, onCambiar }: { pagina: number
             className={cn(
               base,
               p === pagina
-                ? 'border-marino-800 bg-marino-800 font-semibold text-white'
-                : 'border-gris-200 bg-superficie text-gris-700 hover:bg-marino-50',
+                ? 'border-marino-800 bg-marino-800 text-white shadow-[0_3px_0_var(--color-marino-900)]'
+                : 'border-borde-fuerte bg-superficie text-marino-800 hover:border-marino-200',
             )}
             onClick={() => onCambiar(p)}
           >
@@ -58,11 +58,11 @@ export function Paginacion({ pagina, totalPaginas, onCambiar }: { pagina: number
 
       <button
         type="button"
-        className={cn(base, 'border-gris-200 bg-superficie text-gris-700 hover:bg-marino-50')}
+        className={cn(base, 'border-borde-fuerte bg-superficie text-marino-800 hover:border-marino-200')}
         disabled={pagina >= totalPaginas - 1}
         onClick={() => onCambiar(pagina + 1)}
       >
-        <ChevronRight className="size-4" aria-hidden="true" />
+        <ChevronRight className="size-[18px]" aria-hidden="true" />
         <span className="sr-only">Página siguiente</span>
       </button>
     </nav>

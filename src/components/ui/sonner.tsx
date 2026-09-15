@@ -9,8 +9,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "!rounded-md !border !border-marino-700/25 !bg-marino-50 !text-marino-900 !shadow-tarjeta !font-sans",
-          description: "!text-gris-700",
+            "!rounded-tarjeta !border-2 !border-borde-fuerte !bg-superficie !text-marino-800 !font-sans !shadow-[0_4px_0_var(--color-borde-fuerte)]",
+          description: "!text-texto-suave",
         },
       }}
       style={

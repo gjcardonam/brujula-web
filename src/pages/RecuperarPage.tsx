@@ -37,15 +37,15 @@ export function RecuperarPage() {
 
   return (
     <LayoutAcceso
-      texto="¿Olvidaste tu contraseña? Te enviamos un enlace para restablecerla."
-      nota="El enlace tiene una vigencia de 30 minutos y solo puede usarse una vez."
+      texto="¿Olvidaste tu contraseña? Escribe tu correo y te enviamos un enlace para volver a entrar."
+      nota="El enlace vence en 30 minutos y solo puede usarse una vez."
     >
-      <form onSubmit={enviar} noValidate className="superficie space-y-5 p-6 sm:p-7">
-        <h1 className="text-2xl font-bold text-gris-900">Solicitar restablecimiento</h1>
+      <form onSubmit={enviar} noValidate className="panel space-y-6 p-6 sm:p-8">
+        <h1 className="text-2xl font-bold text-marino-800">Recuperar contraseña</h1>
 
         <Campo etiqueta="Correo electrónico" error={errorCampo}>
           {p => (
-            <Input {...p} type="email" autoComplete="username" autoFocus value={email}
+            <Input {...p} type="email" autoComplete="username" autoFocus placeholder="tu.correo@gmail.com" value={email}
               onChange={e => { setEmail(e.target.value); setErrorCampo(undefined) }} />
           )}
         </Campo>
@@ -53,14 +53,14 @@ export function RecuperarPage() {
         {error && <Aviso>{error}</Aviso>}
         {mensaje && <Aviso tono="confirmacion">{mensaje}</Aviso>}
 
-        <Button type="submit" size="lg" className="w-full" disabled={enviando}>
-          {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        <Button type="submit" size="bloque" disabled={enviando}>
+          {enviando && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
           {enviando ? 'Enviando' : 'Enviar enlace'}
         </Button>
 
         <div className="text-center">
-          <Link to="/login" className="rounded-sm text-sm text-marino-700 underline underline-offset-4 hover:text-marino-900">
-            Volver a iniciar sesión
+          <Link to="/login" className="text-sm font-bold text-marino-700 underline decoration-2 underline-offset-4 hover:text-violeta-600">
+            Volver a entrar
           </Link>
         </div>
       </form>

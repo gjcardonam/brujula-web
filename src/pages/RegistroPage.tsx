@@ -63,7 +63,7 @@ export function RegistroPage() {
           aceptoTerminos: terminos,
         },
       })
-      navigate('/login', { replace: true, state: { aviso: 'Tu cuenta quedó creada. Inicia sesión con tu correo y contraseña.' } })
+      navigate('/login', { replace: true, state: { aviso: 'Tu cuenta quedó creada. Entra con tu correo y tu contraseña.' } })
     } catch (err) {
       setError(mensajeDe(err))
     } finally {
@@ -73,14 +73,14 @@ export function RegistroPage() {
 
   return (
     <LayoutAcceso
-      texto="Ya verificamos tu cuenta de Google. Completa tus datos para crear tu cuenta de estudiante."
-      nota="No solicitamos ni guardamos la contraseña de tu cuenta de Google."
+      texto="Ya verificamos tu cuenta de Google. Completa tus datos y empieza a practicar."
+      nota="No pedimos ni guardamos la contraseña de tu cuenta de Google."
     >
-      <form onSubmit={enviar} noValidate className="superficie space-y-5 p-6 sm:p-7">
-        <h1 className="text-2xl font-bold text-gris-900">Completa tu registro</h1>
+      <form onSubmit={enviar} noValidate className="panel space-y-6 p-6 sm:p-8">
+        <h1 className="text-2xl font-bold text-marino-800">Crear tu cuenta</h1>
 
         <Aviso tono="confirmacion">
-          Correo verificado con Google: <span className="font-semibold">{st.email}</span>
+          Correo verificado con Google: <span className="font-bold">{st.email}</span>
         </Aviso>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -109,7 +109,7 @@ export function RegistroPage() {
           )}
         </Campo>
 
-        <Campo etiqueta="Confirmación de contraseña" error={errores.confirmacion}>
+        <Campo etiqueta="Repite la contraseña" error={errores.confirmacion}>
           {p => (
             <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
               onChange={e => { setConfirmacion(e.target.value); setErrores(x => ({ ...x, confirmacion: undefined })) }} />
@@ -117,33 +117,33 @@ export function RegistroPage() {
         </Campo>
 
         <div className="space-y-2">
-          <div className="flex items-start gap-3 rounded-md border border-gris-200 bg-gris-50 p-3.5">
+          <div className="flex items-start gap-3 rounded-control-lg border-2 border-borde-fuerte bg-hueso p-4">
             <Checkbox
               id={idTerminos}
               checked={terminos}
               aria-invalid={errores.terminos ? true : undefined}
               aria-describedby={errores.terminos ? `${idTerminos}-error` : undefined}
               onCheckedChange={v => { setTerminos(v === true); setErrores(x => ({ ...x, terminos: undefined })) }}
-              className="mt-0.5"
+              className="mt-0.5 bg-superficie"
             />
-            <label htmlFor={idTerminos} className="text-sm leading-snug text-gris-700">
-              Acepto los <span className="font-medium text-gris-900">Términos y Condiciones</span> y la{' '}
-              <span className="font-medium text-gris-900">Política de Tratamiento de Datos Personales</span>.
+            <label htmlFor={idTerminos} className="text-sm leading-snug text-texto-suave">
+              Acepto los <span className="font-bold text-marino-800">Términos y Condiciones</span> y la{' '}
+              <span className="font-bold text-marino-800">Política de Tratamiento de Datos Personales</span>.
             </label>
           </div>
           {errores.terminos && (
-            <p id={`${idTerminos}-error`} className="text-xs font-medium text-error-700">{errores.terminos}</p>
+            <p id={`${idTerminos}-error`} className="text-xs font-bold text-error-700">{errores.terminos}</p>
           )}
         </div>
 
         {error && <Aviso>{error}</Aviso>}
 
         <div className="space-y-3">
-          <Button type="submit" size="lg" className="w-full" disabled={enviando}>
-            {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          <Button type="submit" size="bloque" disabled={enviando}>
+            {enviando && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
             {enviando ? 'Creando cuenta' : 'Crear cuenta'}
           </Button>
-          <Button type="button" variant="ghost" className="w-full" onClick={() => navigate('/login')}>
+          <Button type="button" variant="fantasma" size="bloque" onClick={() => navigate('/login')}>
             Cancelar
           </Button>
         </div>

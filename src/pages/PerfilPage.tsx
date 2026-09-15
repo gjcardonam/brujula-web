@@ -101,93 +101,101 @@ export function PerfilPage() {
     }
   }
 
+  const iniciales = `${usuario?.nombre?.[0] ?? ''}${usuario?.apellido?.[0] ?? ''}`.toUpperCase()
+
   return (
-    <div className="animate-subir">
-      <header className="mb-7">
-        <h1 className="text-2xl font-bold text-gris-900 sm:text-3xl">Mi perfil</h1>
-        <p className="mt-1.5 text-sm text-gris-500">Actualiza tus datos o cambia tu contraseña.</p>
+    <div className="mx-auto w-full max-w-[640px] animate-entrar space-y-6">
+      <header className="flex items-center gap-5">
+        <span
+          aria-hidden="true"
+          className="grid size-16 shrink-0 place-items-center rounded-full bg-marino-800 font-titular text-xl font-bold text-white"
+        >
+          {iniciales || 'B'}
+        </span>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">{usuario?.nombre} {usuario?.apellido}</h1>
+          <p className="truncate text-base text-texto-suave">{usuario?.email}</p>
+        </div>
       </header>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <form onSubmit={guardarPerfil} noValidate className="superficie space-y-5 p-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gris-900">Datos personales</h2>
+      <form onSubmit={guardarPerfil} noValidate className="panel space-y-6 p-6 sm:p-7">
+        <h2 className="text-xl font-bold text-marino-800">Datos personales</h2>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Campo etiqueta="Nombres" error={erroresPerfil.nombre}>
-              {p => (
-                <Input {...p} value={nombre} maxLength={30} autoComplete="given-name"
-                  onChange={e => { setNombre(e.target.value); setErroresPerfil(x => ({ ...x, nombre: undefined })) }} />
-              )}
-            </Campo>
-            <Campo etiqueta="Apellidos" error={erroresPerfil.apellido}>
-              {p => (
-                <Input {...p} value={apellido} maxLength={50} autoComplete="family-name"
-                  onChange={e => { setApellido(e.target.value); setErroresPerfil(x => ({ ...x, apellido: undefined })) }} />
-              )}
-            </Campo>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={idCorreo} className="text-gris-700">Correo electrónico</Label>
-            <Input id={idCorreo} value={usuario?.email ?? ''} readOnly aria-readonly="true" aria-describedby={`${idCorreo}-ayuda`} className="bg-gris-50 text-gris-700" />
-            <p id={`${idCorreo}-ayuda`} className="text-xs text-gris-500">
-              El correo proviene de tu cuenta de Google y no puede modificarse.
-            </p>
-          </div>
-
-          <div aria-live="polite">{avisoPerfil && <Aviso tono={avisoPerfil.tono}>{avisoPerfil.texto}</Aviso>}</div>
-
-          <div className="flex flex-wrap gap-3">
-            <Button type="submit" disabled={!editado || guardandoPerfil}>
-              {guardandoPerfil && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              {guardandoPerfil ? 'Guardando' : 'Guardar cambios'}
-            </Button>
-            <Button type="button" variant="outline" onClick={cancelar} disabled={!editado || guardandoPerfil}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-
-        <form onSubmit={cambiarPassword} noValidate className="superficie space-y-5 p-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gris-900">Cambiar contraseña</h2>
-
-          <Campo etiqueta="Contraseña actual" error={erroresPw.actual}>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Campo etiqueta="Nombres" error={erroresPerfil.nombre}>
             {p => (
-              <Input {...p} type="password" autoComplete="current-password" value={actual}
-                onChange={e => { setActual(e.target.value); setErroresPw(x => ({ ...x, actual: undefined })) }} />
+              <Input {...p} value={nombre} maxLength={30} autoComplete="given-name"
+                onChange={e => { setNombre(e.target.value); setErroresPerfil(x => ({ ...x, nombre: undefined })) }} />
             )}
           </Campo>
-
-          <Campo
-            etiqueta="Nueva contraseña"
-            error={erroresPw.nueva}
-            ayuda="De 8 a 15 caracteres, con mayúscula, minúscula, número y un signo (. , + - * _ @)."
-          >
+          <Campo etiqueta="Apellidos" error={erroresPerfil.apellido}>
             {p => (
-              <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={nueva}
-                onChange={e => { setNueva(e.target.value); setErroresPw(x => ({ ...x, nueva: undefined })) }} />
+              <Input {...p} value={apellido} maxLength={50} autoComplete="family-name"
+                onChange={e => { setApellido(e.target.value); setErroresPerfil(x => ({ ...x, apellido: undefined })) }} />
             )}
           </Campo>
+        </div>
 
-          <Campo etiqueta="Confirmar nueva contraseña" error={erroresPw.confirmacion}>
-            {p => (
-              <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
-                onChange={e => { setConfirmacion(e.target.value); setErroresPw(x => ({ ...x, confirmacion: undefined })) }} />
-            )}
-          </Campo>
-
-          <div aria-live="polite">{avisoPw && <Aviso tono={avisoPw.tono}>{avisoPw.texto}</Aviso>}</div>
-
-          <p className="text-xs text-gris-500">
-            Al cambiarla cerramos tus sesiones abiertas y tendrás que entrar de nuevo.
+        <div className="space-y-2">
+          <Label htmlFor={idCorreo}>Correo electrónico</Label>
+          <Input id={idCorreo} value={usuario?.email ?? ''} readOnly aria-readonly="true" aria-describedby={`${idCorreo}-ayuda`} />
+          <p id={`${idCorreo}-ayuda`} className="text-xs text-texto-suave">
+            El correo viene de tu cuenta de Google y no puede cambiarse.
           </p>
+        </div>
 
-          <Button type="submit" disabled={guardandoPw}>
-            {guardandoPw && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {guardandoPw ? 'Actualizando' : 'Actualizar contraseña'}
+        <div aria-live="polite">{avisoPerfil && <Aviso tono={avisoPerfil.tono}>{avisoPerfil.texto}</Aviso>}</div>
+
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={!editado || guardandoPerfil}>
+            {guardandoPerfil && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
+            {guardandoPerfil ? 'Guardando' : 'Guardar cambios'}
           </Button>
-        </form>
-      </div>
+          <Button type="button" variant="contorno" onClick={cancelar} disabled={!editado || guardandoPerfil}>
+            Cancelar
+          </Button>
+        </div>
+      </form>
+
+      <form onSubmit={cambiarPassword} noValidate className="panel space-y-6 p-6 sm:p-7">
+        <h2 className="text-xl font-bold text-marino-800">Cambiar contraseña</h2>
+
+        <Campo etiqueta="Contraseña actual" error={erroresPw.actual}>
+          {p => (
+            <Input {...p} type="password" autoComplete="current-password" value={actual}
+              onChange={e => { setActual(e.target.value); setErroresPw(x => ({ ...x, actual: undefined })) }} />
+          )}
+        </Campo>
+
+        <Campo
+          etiqueta="Nueva contraseña"
+          error={erroresPw.nueva}
+          ayuda="De 8 a 15 caracteres, con mayúscula, minúscula, número y un signo (. , + - * _ @)."
+        >
+          {p => (
+            <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={nueva}
+              onChange={e => { setNueva(e.target.value); setErroresPw(x => ({ ...x, nueva: undefined })) }} />
+          )}
+        </Campo>
+
+        <Campo etiqueta="Repite la nueva contraseña" error={erroresPw.confirmacion}>
+          {p => (
+            <Input {...p} type="password" autoComplete="new-password" maxLength={15} value={confirmacion}
+              onChange={e => { setConfirmacion(e.target.value); setErroresPw(x => ({ ...x, confirmacion: undefined })) }} />
+          )}
+        </Campo>
+
+        <div aria-live="polite">{avisoPw && <Aviso tono={avisoPw.tono}>{avisoPw.texto}</Aviso>}</div>
+
+        <p className="text-xs text-texto-suave">
+          Al cambiarla cerramos tus sesiones abiertas y tendrás que entrar de nuevo.
+        </p>
+
+        <Button type="submit" disabled={guardandoPw}>
+          {guardandoPw && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
+          {guardandoPw ? 'Actualizando' : 'Actualizar contraseña'}
+        </Button>
+      </form>
     </div>
   )
 }

@@ -34,7 +34,7 @@ export function SelectorDeConfianza({
   }
 
   return (
-    <div role="radiogroup" aria-label={etiqueta} className="flex gap-2">
+    <div role="radiogroup" aria-label={etiqueta} className="flex w-full gap-2 sm:w-auto">
       {NIVELES.map((n, i) => {
         const activo = valor === n
         return (
@@ -50,11 +50,12 @@ export function SelectorDeConfianza({
             onClick={() => onCambiar(n)}
             onKeyDown={e => alTeclado(e, i)}
             className={cn(
-              'inline-flex size-11 items-center justify-center rounded-md border text-base transition-all',
-              'disabled:cursor-not-allowed disabled:opacity-60',
+              'inline-flex h-[46px] min-w-0 flex-1 items-center justify-center rounded-control border-2 font-titular text-md font-bold transition-[transform,box-shadow,background-color,border-color,color] sm:w-[54px] sm:flex-none',
+              'disabled:cursor-default disabled:opacity-70',
               activo
-                ? 'border-ambar-600 bg-ambar-500 font-semibold text-gris-900 shadow-tarjeta'
-                : 'border-gris-200 bg-superficie text-gris-700 hover:border-marino-700 hover:text-marino-900',
+                ? 'border-ambar-500 bg-ambar-500 text-marino-800 shadow-[0_3px_0_var(--color-ambar-700)]'
+                : 'border-borde-fuerte bg-superficie text-texto-suave hover:border-marino-200 hover:text-marino-800',
+              !disabled && 'active:translate-y-[2px] active:shadow-none',
             )}
           >
             {n}

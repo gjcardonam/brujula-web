@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from 'cn'
 import { api, mensajeDe } from '@/api/client'
@@ -43,15 +43,15 @@ function nuevaOpcion(): OpcionForm {
 function Esqueleto() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-      <div className="superficie space-y-5 p-5 sm:p-6">
+      <div className="panel space-y-5 p-6 sm:p-7">
         <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-28 w-full rounded-control" />
+        <Skeleton className="h-12 w-full rounded-control" />
+        <Skeleton className="h-12 w-full rounded-control" />
       </div>
-      <div className="superficie space-y-4 p-5 sm:p-6">
+      <div className="panel space-y-4 p-6 sm:p-7">
         <Skeleton className="h-7 w-56" />
-        {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+        {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-32 w-full rounded-tarjeta" />)}
       </div>
     </div>
   )
@@ -153,7 +153,7 @@ export function CrearEjercicioPage() {
     setGuardando(true)
     try {
       const r = await api<EjercicioCreado>('/ejercicios', { method: 'POST', body })
-      toast(`Guardamos el ejercicio #${r.numero}`, { description: 'Ya está disponible para los estudiantes.' })
+      toast(`Guardamos el ejercicio ${r.numero}`, { description: 'Ya está disponible para los estudiantes.' })
       navigate('/admin/banco', { replace: true })
     } catch (err) {
       setError(mensajeDe(err))
@@ -164,9 +164,9 @@ export function CrearEjercicioPage() {
 
   if (errorCatalogos) {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
+      <div className="mx-auto max-w-lg space-y-5">
         <Aviso>{errorCatalogos}</Aviso>
-        <Button asChild variant="outline"><Link to="/admin/banco">Volver al banco</Link></Button>
+        <Button asChild variant="contorno"><Link to="/admin/banco">Volver al banco</Link></Button>
       </div>
     )
   }
@@ -181,23 +181,22 @@ export function CrearEjercicioPage() {
   }
 
   return (
-    <form onSubmit={guardar} noValidate className="animate-subir">
-      <nav aria-label="Ruta" className="mb-3 flex items-center gap-1 text-xs text-gris-500">
-        <Link to="/admin/banco" className="rounded-sm hover:text-marino-700 hover:underline">Banco de ejercicios</Link>
-        <ChevronRight className="size-3" aria-hidden="true" />
-        <span aria-current="page" className="text-gris-700">Crear ejercicio</span>
-      </nav>
-
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gris-900 sm:text-3xl">Crear ejercicio</h1>
-        <p className="mt-1.5 text-sm text-gris-500">
-          Queda activo y con número propio en cuanto lo guardes.
-        </p>
+    <form onSubmit={guardar} noValidate className="animate-entrar">
+      <header className="mb-7">
+        <Link
+          to="/admin/banco"
+          className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+        >
+          <ArrowLeft className="size-[17px]" aria-hidden="true" />
+          Volver al banco
+        </Link>
+        <h1 className="mt-4 text-2xl font-bold text-marino-800 sm:text-3xl">Crear ejercicio</h1>
+        <p className="mt-1.5 text-base text-texto-suave">Queda activo y con número propio en cuanto lo guardes.</p>
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.15fr_1fr]">
-        <section className="superficie space-y-5 p-5 sm:p-6 lg:sticky lg:top-20">
-          <h2 className="text-xl font-semibold text-gris-900">Datos del ejercicio</h2>
+        <section className="panel space-y-6 p-6 sm:p-7 lg:sticky lg:top-24">
+          <h2 className="text-xl font-bold text-marino-800">Datos del ejercicio</h2>
 
           <Campo etiqueta="Enunciado" error={errores.enunciado}>
             {p => (
@@ -212,12 +211,12 @@ export function CrearEjercicioPage() {
           </Campo>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gris-700">Imagen del enunciado</p>
+            <p className="text-sm font-bold text-marino-800">Imagen del enunciado</p>
             {imagen ? (
               <div className="flex flex-wrap items-center gap-3">
-                <img src={imagen} alt="Imagen del enunciado" className="max-h-24 rounded-md border border-gris-200" />
-                <Button type="button" variant="outline" size="sm" onClick={() => setImagen(null)}>
-                  <Trash2 className="size-4" aria-hidden="true" />
+                <img src={imagen} alt="Imagen del enunciado" className="max-h-24 rounded-ficha border border-borde" />
+                <Button type="button" variant="contorno" size="sm" onClick={() => setImagen(null)}>
+                  <Trash2 aria-hidden="true" />
                   Quitar
                 </Button>
               </div>
@@ -232,18 +231,19 @@ export function CrearEjercicioPage() {
                 />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="contorno"
+                  size="sm"
                   disabled={subiendo === 'enunciado'}
                   onClick={() => archivos.current.enunciado?.click()}
                 >
                   {subiendo === 'enunciado'
-                    ? <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                    : <ImagePlus className="size-4" aria-hidden="true" />}
+                    ? <Loader2 className="animate-spin" aria-hidden="true" />
+                    : <ImagePlus aria-hidden="true" />}
                   {subiendo === 'enunciado' ? 'Subiendo' : 'Subir imagen'}
                 </Button>
               </>
             )}
-            <p className="text-xs text-gris-500">Opcional. JPG, PNG o WEBP de hasta 5 MB.</p>
+            <p className="text-xs text-texto-suave">Opcional. JPG, PNG o WEBP de hasta 5 MB.</p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -298,19 +298,19 @@ export function CrearEjercicioPage() {
 
           {error && <Aviso>{error}</Aviso>}
 
-          <div className="flex flex-wrap gap-3 border-t border-gris-200 pt-5">
+          <div className="flex flex-wrap gap-3 border-t border-borde pt-6">
             <Button type="submit" disabled={guardando || subiendo !== null}>
-              {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {guardando && <Loader2 className="animate-spin" aria-hidden="true" />}
               {guardando ? 'Guardando' : 'Guardar ejercicio'}
             </Button>
-            <Button asChild variant="outline"><Link to="/admin/banco">Cancelar</Link></Button>
+            <Button asChild variant="contorno"><Link to="/admin/banco">Cancelar</Link></Button>
           </div>
         </section>
 
-        <section className="superficie space-y-4 p-5 sm:p-6">
+        <section className="panel space-y-5 p-6 sm:p-7">
           <div>
-            <h2 className="text-xl font-semibold text-gris-900">Opciones de respuesta</h2>
-            <p className="mt-1 text-sm text-gris-500">
+            <h2 className="text-xl font-bold text-marino-800">Opciones de respuesta</h2>
+            <p className="mt-1.5 text-base text-texto-suave">
               Marca la correcta y explica cada una: esa explicación es la que verá el estudiante.
             </p>
           </div>
@@ -324,65 +324,80 @@ export function CrearEjercicioPage() {
                 <fieldset
                   key={o.clave}
                   className={cn(
-                    'rounded-md border p-4 transition-colors',
-                    o.esCorrecta ? 'border-marino-800 bg-marino-50/50' : 'border-gris-200 bg-gris-50/60',
+                    'rounded-tarjeta border-2 p-4 transition-colors sm:p-5',
+                    o.esCorrecta ? 'border-exito-600 bg-exito-50' : 'border-borde-fuerte bg-superficie',
                   )}
                 >
                   <legend className="sr-only">Opción {letra(i)}</legend>
 
-                  <div className="mb-3 flex items-center gap-2">
-                    <span aria-hidden="true" className="shrink-0 text-sm font-semibold whitespace-nowrap text-gris-900">
-                      Opción {letra(i)}
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'grid size-[34px] shrink-0 place-items-center rounded-ficha font-titular text-sm font-bold',
+                        o.esCorrecta ? 'bg-exito-600 text-white' : 'bg-hueso text-texto-suave',
+                      )}
+                    >
+                      {letra(i)}
                     </span>
-                    <label className="ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-xs whitespace-nowrap text-gris-700">
+
+                    <label
+                      className={cn(
+                        'inline-flex cursor-pointer items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-colors',
+                        o.esCorrecta
+                          ? 'border-exito-600 bg-superficie text-exito-700'
+                          : 'border-borde-fuerte bg-superficie text-texto-suave hover:border-marino-200',
+                      )}
+                    >
                       <input
                         type="radio"
                         name="opcion-correcta"
                         checked={o.esCorrecta}
                         onChange={() => marcarCorrecta(o.clave)}
-                        className="size-4 accent-marino-800"
+                        className="size-4 accent-[var(--color-exito-600)]"
                       />
-                      <span className={o.esCorrecta ? 'font-medium text-marino-800' : undefined}>
-                        {o.esCorrecta ? 'Es la correcta' : 'Marcar correcta'}
-                      </span>
+                      {o.esCorrecta ? 'Es la correcta' : 'Marcar correcta'}
                     </label>
-                    {!o.imagen && (
-                      <>
-                        <input
-                          ref={el => { archivos.current[o.clave] = el }}
-                          type="file"
-                          accept={TIPOS_IMAGEN.join(',')}
-                          className="hidden"
-                          onChange={e => { const f = e.target.files?.[0]; if (f) void subir(f, o.clave) }}
-                        />
+
+                    <div className="ml-auto flex items-center gap-1">
+                      {!o.imagen && (
+                        <>
+                          <input
+                            ref={el => { archivos.current[o.clave] = el }}
+                            type="file"
+                            accept={TIPOS_IMAGEN.join(',')}
+                            className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) void subir(f, o.clave) }}
+                          />
+                          <Button
+                            type="button"
+                            variant="fantasma"
+                            size="icono-sm"
+                            disabled={subiendo === o.clave}
+                            onClick={() => archivos.current[o.clave]?.click()}
+                          >
+                            {subiendo === o.clave
+                              ? <Loader2 className="animate-spin" aria-hidden="true" />
+                              : <ImagePlus aria-hidden="true" />}
+                            <span className="sr-only">Usar una imagen en la opción {letra(i)}</span>
+                          </Button>
+                        </>
+                      )}
+                      {opciones.length > 2 && (
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={subiendo === o.clave}
-                          onClick={() => archivos.current[o.clave]?.click()}
+                          variant="fantasma"
+                          size="icono-sm"
+                          onClick={() => setOpciones(ops => ops.filter(x => x.clave !== o.clave))}
                         >
-                          {subiendo === o.clave
-                            ? <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                            : <ImagePlus className="size-4" aria-hidden="true" />}
-                          <span className="sr-only">Usar una imagen en la opción {letra(i)}</span>
+                          <Trash2 aria-hidden="true" />
+                          <span className="sr-only">Quitar la opción {letra(i)}</span>
                         </Button>
-                      </>
-                    )}
-                    {opciones.length > 2 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setOpciones(ops => ops.filter(x => x.clave !== o.clave))}
-                      >
-                        <Trash2 className="size-4" aria-hidden="true" />
-                        <span className="sr-only">Quitar la opción {letra(i)}</span>
-                      </Button>
-                    )}
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     <Campo etiqueta="Texto" error={err?.contenido}>
                       {p => (
                         <Input
@@ -395,9 +410,9 @@ export function CrearEjercicioPage() {
 
                     {o.imagen && (
                       <div className="flex flex-wrap items-center gap-3">
-                        <img src={o.imagen} alt={`Opción ${letra(i)}`} className="max-h-20 rounded-md border border-gris-200" />
-                        <Button type="button" variant="outline" size="sm" onClick={() => cambiar(o.clave, { imagen: null })}>
-                          <Trash2 className="size-4" aria-hidden="true" />
+                        <img src={o.imagen} alt={`Opción ${letra(i)}`} className="max-h-20 rounded-ficha border border-borde" />
+                        <Button type="button" variant="contorno" size="sm" onClick={() => cambiar(o.clave, { imagen: null })}>
+                          <Trash2 aria-hidden="true" />
                           Quitar imagen
                         </Button>
                       </div>
@@ -420,8 +435,8 @@ export function CrearEjercicioPage() {
             })}
           </div>
 
-          <Button type="button" variant="outline" onClick={() => setOpciones(ops => [...ops, nuevaOpcion()])}>
-            <Plus className="size-4" aria-hidden="true" />
+          <Button type="button" variant="contorno" onClick={() => setOpciones(ops => [...ops, nuevaOpcion()])}>
+            <Plus aria-hidden="true" />
             Agregar opción
           </Button>
         </section>
