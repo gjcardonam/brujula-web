@@ -234,7 +234,13 @@ export function EjercicioPage() {
               </p>
             )}
 
-            <h1 className="text-2xl leading-[1.35] font-semibold text-marino-800 [text-wrap:pretty] sm:text-[29px]">
+            <h1
+              className={
+                ejercicio.enunciado.length > 180
+                  ? 'font-sans text-[17px] leading-[1.65] font-medium tracking-normal whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[19px]'
+                  : 'text-2xl leading-[1.35] font-semibold whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[29px]'
+              }
+            >
               {ejercicio.enunciado}
             </h1>
 
@@ -242,7 +248,7 @@ export function EjercicioPage() {
               <img
                 src={ejercicio.imagenEnunciado}
                 alt="Ilustración del enunciado"
-                className="mt-6 max-h-80 w-full rounded-tarjeta border border-borde object-contain"
+                className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde object-contain"
               />
             )}
 
@@ -275,7 +281,11 @@ export function EjercicioPage() {
                     <span className={cn('min-w-0 flex-1 text-lg font-semibold', est.texto)}>
                       {o.descripcion}
                       {o.imagen && (
-                        <img src={o.imagen} alt={`Opción ${o.letra}`} className="mt-2.5 max-h-28 rounded-ficha border border-borde" />
+                        <img
+                          src={o.imagen}
+                          alt={`Opción ${o.letra}`}
+                          className="mt-2.5 max-h-[220px] w-full rounded-ficha border border-borde object-contain"
+                        />
                       )}
                     </span>
                     {etiqueta && (
