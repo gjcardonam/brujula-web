@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from 'cn'
-import { api, ApiError, mensajeDe } from '@/api/client'
+import { api, ApiError, mensajeDe, urlDeArchivo } from '@/api/client'
 import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
@@ -246,7 +246,7 @@ export function EjercicioPage() {
 
             {ejercicio.imagenEnunciado && (
               <img
-                src={ejercicio.imagenEnunciado}
+                src={urlDeArchivo(ejercicio.imagenEnunciado)}
                 alt="Ilustración del enunciado"
                 className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde object-contain"
               />
@@ -282,7 +282,7 @@ export function EjercicioPage() {
                       {o.descripcion}
                       {o.imagen && (
                         <img
-                          src={o.imagen}
+                          src={urlDeArchivo(o.imagen)}
                           alt={`Opción ${o.letra}`}
                           className="mt-2.5 max-h-[220px] w-full rounded-ficha border border-borde object-contain"
                         />

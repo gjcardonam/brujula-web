@@ -3,6 +3,10 @@ import type { Sesion } from '@/api/types'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
+export function urlDeArchivo(url: string): string {
+  return url.startsWith('/api/') ? BASE + url.slice(4) : url
+}
+
 export class ApiError extends Error {
   estado: number
   codigo: string

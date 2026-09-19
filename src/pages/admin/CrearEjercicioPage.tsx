@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from 'cn'
-import { api, mensajeDe } from '@/api/client'
+import { api, mensajeDe, urlDeArchivo } from '@/api/client'
 import type { Catalogos, EjercicioCreado, EjercicioRequest, ImagenSubida } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
 import { Campo } from '@/components/Campo'
@@ -214,7 +214,7 @@ export function CrearEjercicioPage() {
             <p className="text-sm font-bold text-marino-800">Imagen del enunciado</p>
             {imagen ? (
               <div className="flex flex-wrap items-center gap-3">
-                <img src={imagen} alt="Imagen del enunciado" className="max-h-24 rounded-ficha border border-borde" />
+                <img src={urlDeArchivo(imagen)} alt="Imagen del enunciado" className="max-h-24 rounded-ficha border border-borde" />
                 <Button type="button" variant="contorno" size="sm" onClick={() => setImagen(null)}>
                   <Trash2 aria-hidden="true" />
                   Quitar
@@ -410,7 +410,7 @@ export function CrearEjercicioPage() {
 
                     {o.imagen && (
                       <div className="flex flex-wrap items-center gap-3">
-                        <img src={o.imagen} alt={`Opción ${letra(i)}`} className="max-h-20 rounded-ficha border border-borde" />
+                        <img src={urlDeArchivo(o.imagen)} alt={`Opción ${letra(i)}`} className="max-h-20 rounded-ficha border border-borde" />
                         <Button type="button" variant="contorno" size="sm" onClick={() => cambiar(o.clave, { imagen: null })}>
                           <Trash2 aria-hidden="true" />
                           Quitar imagen
