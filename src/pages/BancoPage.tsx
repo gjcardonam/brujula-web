@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Plus } from 'lucide-react'
+import { ArrowLeft, ArrowRight, LayoutGrid, Plus } from 'lucide-react'
 import { cn } from 'cn'
 import { api, mensajeDe } from '@/api/client'
 import type { Componentes, Pagina, Tarjeta } from '@/api/types'
@@ -58,25 +58,23 @@ function Pildora({
   )
 }
 
-function CabeceraDeLista({
-  nombre,
-  cantidad,
-  volver,
-}: {
-  nombre: string
-  cantidad: number
-  volver: string
-}) {
+function VolverALaRuta() {
+  return (
+    <Link
+      to="/banco"
+      className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+    >
+      <ArrowLeft className="size-[17px]" aria-hidden="true" />
+      Volver a la ruta
+    </Link>
+  )
+}
+
+function CabeceraDeLista({ nombre, cantidad }: { nombre: string; cantidad: number }) {
   const tono = tonoDeComponente(nombre)
   return (
     <div>
-      <Link
-        to={volver}
-        className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
-      >
-        <ArrowLeft className="size-[17px]" aria-hidden="true" />
-        Volver a la ruta
-      </Link>
+      <VolverALaRuta />
       <div className="mt-4 flex items-center gap-4">
         <span
           aria-hidden="true"
@@ -95,12 +93,35 @@ function CabeceraDeLista({
   )
 }
 
+function CabeceraTodos({ cantidad }: { cantidad: number }) {
+  return (
+    <div>
+      <VolverALaRuta />
+      <div className="mt-4 flex items-center gap-4">
+        <span
+          aria-hidden="true"
+          className="grid size-[58px] shrink-0 place-items-center rounded-[18px] bg-marino-100 text-marino-700"
+        >
+          <LayoutGrid className="size-[27px]" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Todos los ejercicios</h1>
+          <p className="text-base text-texto-suave">
+            {cantidad} {cantidad === 1 ? 'ejercicio' : 'ejercicios'} en total
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function BancoPage() {
   const { esAdmin } = useAuth()
   const [params, setParams] = useSearchParams()
   const componente = params.get('componente') ? Number(params.get('componente')) : null
+  const verTodos = params.get('vista') === 'todos'
   const pagina = Number(params.get('pagina') ?? 0)
-  const modoRuta = !esAdmin && componente === null
+  const modoRuta = !esAdmin && componente === null && !verTodos
 
   const [componentes, setComponentes] = useState<Componentes | null>(null)
   const [cargandoComponentes, setCargandoComponentes] = useState(true)
@@ -159,9 +180,10 @@ export function BancoPage() {
     return () => { vivo = false }
   }, [modoRuta, componente, pagina, reintento])
 
-  const filtrar = useCallback((id: number | null) => {
+  const filtrar = useCallback((id: number | null, todos = false) => {
     const q = new URLSearchParams()
     if (id) q.set('componente', String(id))
+    if (todos) q.set('vista', 'todos')
     q.set('pagina', '0')
     setParams(q)
   }, [setParams])
@@ -245,11 +267,19 @@ export function BancoPage() {
               </section>
             )}
 
-            <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-              <h1 className="text-xl font-bold text-marino-800">Tu ruta de práctica</h1>
-              <p className="text-base text-texto-suave">
-                {componentes.total} ejercicios en {enPalabras(listaComponentes.length)} componentes
-              </p>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-1">
+              <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                <h1 className="text-xl font-bold text-marino-800">Tu ruta de práctica</h1>
+                <p className="text-base text-texto-suave">
+                  {componentes.total} ejercicios en {enPalabras(listaComponentes.length)} componentes
+                </p>
+              </div>
+              <Link
+                to="/banco?vista=todos"
+                className="text-sm font-bold text-texto-suave underline-offset-4 transition-colors hover:text-marino-800 hover:underline"
+              >
+                Ver todos los ejercicios
+              </Link>
             </div>
 
             <div className="space-y-3.5">
@@ -282,18 +312,29 @@ export function BancoPage() {
           </Button>
         </header>
       ) : nombreComponente ? (
-        <CabeceraDeLista nombre={nombreComponente} cantidad={cantidadComponente} volver="/banco" />
+        <CabeceraDeLista nombre={nombreComponente} cantidad={cantidadComponente} />
+      ) : verTodos ? (
+        <CabeceraTodos cantidad={componentes?.total ?? 0} />
       ) : null}
 
       {componentes ? (
         <div role="group" aria-label="Filtrar por componente" className="flex flex-wrap gap-2.5">
           <Pildora
-            activo={componente === null}
+            activo={componente === null && !verTodos}
             nombre={esAdmin ? 'Todos' : 'Mi ruta'}
             cantidad={componentes.total}
             conIcono={false}
             onClick={() => filtrar(null)}
           />
+          {!esAdmin && (
+            <Pildora
+              activo={componente === null && verTodos}
+              nombre="Todos"
+              cantidad={componentes.total}
+              conIcono={false}
+              onClick={() => filtrar(null, true)}
+            />
+          )}
           {listaComponentes.map(c => (
             <Pildora
               key={c.id}

@@ -3,7 +3,10 @@ import { ArrowRight } from 'lucide-react'
 import { cn } from 'cn'
 import type { Tarjeta } from '@/api/types'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+
+const EXPLICACION_DESHABILITADO = 'Disponible en una próxima entrega'
 
 function Cabecera({ tarjeta, mostrarComponente }: { tarjeta: Tarjeta; mostrarComponente: boolean }) {
   const tono = tonoDeComponente(tarjeta.componente)
@@ -89,6 +92,42 @@ export function TarjetaEjercicioAdmin({
         <span aria-hidden="true" className={cn('size-1.5 rounded-full', desactivado ? 'bg-texto-tenue' : 'bg-exito-600')} />
         {tarjeta.estado}
       </span>
+
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-borde pt-4">
+        <Button
+          type="button"
+          variant="contorno"
+          size="sm"
+          disabled
+          aria-disabled="true"
+          tabIndex={-1}
+          title={EXPLICACION_DESHABILITADO}
+        >
+          Editar
+        </Button>
+        <Button
+          type="button"
+          variant="contorno"
+          size="sm"
+          disabled
+          aria-disabled="true"
+          tabIndex={-1}
+          title={EXPLICACION_DESHABILITADO}
+        >
+          Ver más
+        </Button>
+        <Button
+          type="button"
+          variant="contorno"
+          size="sm"
+          disabled
+          aria-disabled="true"
+          tabIndex={-1}
+          title={EXPLICACION_DESHABILITADO}
+        >
+          {desactivado ? 'Activar' : 'Desactivar'}
+        </Button>
+      </div>
     </article>
   )
 }
