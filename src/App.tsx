@@ -13,6 +13,7 @@ import { PerfilPage } from '@/pages/PerfilPage'
 import { BancoPage } from '@/pages/BancoPage'
 import { EjercicioPage } from '@/pages/EjercicioPage'
 import { SimulacrosPage } from '@/pages/SimulacrosPage'
+import { SimulacroEnCursoPage } from '@/pages/SimulacroEnCursoPage'
 import { CrearEjercicioPage } from '@/pages/admin/CrearEjercicioPage'
 
 function Privado({ rol, children }: { rol?: 'Estudiante' | 'Administrador'; children: ReactElement }) {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/restablecer" element={<RestablecerPage />} />
 
         <Route path="/ejercicios/:id" element={<Privado rol="Estudiante"><EjercicioPage /></Privado>} />
+        <Route path="/simulacros/:id" element={<Privado rol="Estudiante"><SimulacroEnCursoPage /></Privado>} />
 
         <Route element={<Privado><BarraSuperior /></Privado>}>
           <Route path="/perfil" element={<PerfilPage />} />
