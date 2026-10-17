@@ -20,10 +20,20 @@ function rango(pagina: number, total: number): (number | 'salto')[] {
 const base =
   'inline-flex h-11 min-w-11 items-center justify-center rounded-ficha border-2 px-3 font-titular text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40'
 
-export function Paginacion({ pagina, totalPaginas, onCambiar }: { pagina: number; totalPaginas: number; onCambiar: (p: number) => void }) {
+export function Paginacion({
+  pagina,
+  totalPaginas,
+  onCambiar,
+  etiqueta = 'Paginación del banco',
+}: {
+  pagina: number
+  totalPaginas: number
+  onCambiar: (p: number) => void
+  etiqueta?: string
+}) {
   if (totalPaginas <= 1) return null
   return (
-    <nav aria-label="Paginación del banco" className="flex flex-wrap items-center justify-center gap-2">
+    <nav aria-label={etiqueta} className="flex flex-wrap items-center justify-center gap-2">
       <button
         type="button"
         className={cn(base, 'border-borde-fuerte bg-superficie text-marino-800 hover:border-marino-200')}
