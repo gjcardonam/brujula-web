@@ -56,7 +56,12 @@ export function BarraSuperior() {
           >
             <ul className="flex items-center gap-6 overflow-x-auto md:gap-7 md:overflow-visible">
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
-              {!esAdmin && <li><Enlace to="/simulacros" end={false}>Simulacros</Enlace></li>}
+              {!esAdmin && (
+                <>
+                  <li><Enlace to="/simulacros" end={false}>Simulacros</Enlace></li>
+                  <li><Enlace to="/estadisticas">Mis estadísticas</Enlace></li>
+                </>
+              )}
               <li><Enlace to="/perfil">Mi perfil</Enlace></li>
             </ul>
           </nav>

@@ -15,6 +15,7 @@ import { EjercicioPage } from '@/pages/EjercicioPage'
 import { SimulacrosPage } from '@/pages/SimulacrosPage'
 import { SimulacroEnCursoPage } from '@/pages/SimulacroEnCursoPage'
 import { ResultadoSimulacroPage } from '@/pages/ResultadoSimulacroPage'
+import { EstadisticasPage } from '@/pages/EstadisticasPage'
 import { CrearEjercicioPage } from '@/pages/admin/CrearEjercicioPage'
 
 function Privado({ rol, children }: { rol?: 'Estudiante' | 'Administrador'; children: ReactElement }) {
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/banco" element={<Privado rol="Estudiante"><BancoPage /></Privado>} />
           <Route path="/simulacros" element={<Privado rol="Estudiante"><SimulacrosPage /></Privado>} />
           <Route path="/simulacros/:id/resultado" element={<Privado rol="Estudiante"><ResultadoSimulacroPage /></Privado>} />
+          <Route path="/estadisticas" element={<Privado rol="Estudiante"><EstadisticasPage /></Privado>} />
           <Route path="/admin/banco" element={<Privado rol="Administrador"><BancoPage /></Privado>} />
           <Route path="/admin/ejercicios/nuevo" element={<Privado rol="Administrador"><CrearEjercicioPage /></Privado>} />
         </Route>
