@@ -30,8 +30,8 @@ compilación.
 
 ## Las pantallas
 
-`main` cubre el Sprint 1 y esta rama suma los simulacros y las estadísticas del Sprint 3.
-Cada archivo de `src/pages` es una pantalla de los mockups aprobados en el Sprint 0.
+`main` cubre el Sprint 1. Cada archivo de `src/pages` es una pantalla de los mockups
+aprobados en el Sprint 0.
 
 | Ruta | Pantalla | Mockup |
 | :-- | :-- | :-- |
@@ -42,18 +42,11 @@ Cada archivo de `src/pages` es una pantalla de los mockups aprobados en el Sprin
 | `/perfil` | Datos personales y cambio de contraseña | M-04 |
 | `/banco` | Banco del estudiante, con filtro y paginación | M-05 |
 | `/ejercicios/:id` | Resolver, con nivel de confianza y retroalimentación | M-06 |
-| `/simulacros` | Iniciar un simulacro eligiendo la duración, y los simulacros terminados | M-08 |
-| `/simulacros/:id` | Simulacro en curso, con el tiempo restante y la corrección de cada respuesta | M-09 |
-| `/simulacros/:id/resultado` | Resultado del simulacro, recomendaciones y detalle de cada respuesta | M-10 |
-| `/estadisticas` | Mis estadísticas de práctica y de simulacros | M-11 |
 | `/admin/banco` | Banco del administrador, con el estado de cada ejercicio | M-12 |
 | `/admin/ejercicios/nuevo` | Crear ejercicio | M-13 |
 
-El simulacro en curso toma la hora del servidor para el temporizador, así que recargar la
-página o perder la conexión no da tiempo extra. Si la red se cae, avisa, conserva la
-respuesta confirmada y la reenvía con el mismo token cuando vuelve, sin duplicarla.
-
-Las pantallas de historial y edición del banco viven en la rama
+Las pantallas de simulacros, estadísticas, historial y edición del banco pertenecen a los
+sprints siguientes y viven en la rama
 [`sprint-2`](https://github.com/gjcardonam/brujula-web/tree/sprint-2).
 
 ## Cómo está organizado

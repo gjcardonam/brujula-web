@@ -3,16 +3,47 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from 'cn'
 import { api, ApiError, mensajeDe, urlDeArchivo } from '@/api/client'
-import type { EjercicioEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
+import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
-import { OpcionesDeRespuesta } from '@/components/OpcionesDeRespuesta'
 import { SelectorDeConfianza } from '@/components/SelectorDeConfianza'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fechaHora } from '@/utils/formato'
 import { uuid } from '@/utils/uuid'
+
+interface EstiloOpcion { caja: string; ficha: string; texto: string }
+
+function estiloOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null): EstiloOpcion {
+  if (!resultado) {
+    return seleccion === o.id
+      ? {
+          caja: 'border-violeta-600 bg-violeta-50',
+          ficha: 'bg-violeta-600 text-white',
+          texto: 'text-violeta-700',
+        }
+      : {
+          caja: 'border-borde-fuerte bg-superficie hover:border-marino-200 active:translate-y-[3px] active:border-b-2',
+          ficha: 'bg-hueso text-texto-suave',
+          texto: 'text-marino-800',
+        }
+  }
+  if (o.id === resultado.idOpcionCorrecta) {
+    return { caja: 'border-exito-600 bg-exito-50', ficha: 'bg-exito-600 text-white', texto: 'text-exito-700' }
+  }
+  if (o.id === resultado.idOpcionSeleccionada) {
+    return { caja: 'border-error-600 bg-error-50', ficha: 'bg-error-600 text-white', texto: 'text-error-700' }
+  }
+  return { caja: 'border-borde-fuerte bg-superficie opacity-55', ficha: 'bg-hueso text-texto-suave', texto: 'text-marino-800' }
+}
+
+function etiquetaOpcion(o: OpcionEstudiante, resultado: ResultadoIntento | null) {
+  if (!resultado) return null
+  if (o.id === resultado.idOpcionCorrecta) return { texto: 'Respuesta correcta', color: 'text-exito-700' }
+  if (o.id === resultado.idOpcionSeleccionada) return { texto: 'Tu respuesta', color: 'text-error-700' }
+  return null
+}
 
 function Esqueleto() {
   return (
@@ -40,6 +71,7 @@ export function EjercicioPage() {
   const [params] = useSearchParams()
   const componente = params.get('componente') ? Number(params.get('componente')) : null
   const navigate = useNavigate()
+  const refOpciones = useRef<(HTMLButtonElement | null)[]>([])
   const refResultado = useRef<HTMLDivElement>(null)
 
   const [ejercicio, setEjercicio] = useState<EjercicioEstudiante | null>(null)
@@ -116,6 +148,24 @@ export function EjercicioPage() {
     }
   }
 
+  function teclasOpciones(e: React.KeyboardEvent, i: number) {
+    if (!ejercicio || resultado) return
+    const total = ejercicio.opciones.length
+    const mapa: Record<string, number> = {
+      ArrowDown: (i + 1) % total,
+      ArrowRight: (i + 1) % total,
+      ArrowUp: (i + total - 1) % total,
+      ArrowLeft: (i + total - 1) % total,
+      Home: 0,
+      End: total - 1,
+    }
+    const destino = mapa[e.key]
+    if (destino === undefined) return
+    e.preventDefault()
+    setSeleccion(ejercicio.opciones[destino].id)
+    refOpciones.current[destino]?.focus()
+  }
+
   if (noDisponible) {
     return (
       <Marco>
@@ -145,6 +195,7 @@ export function EjercicioPage() {
   const opcionCorrecta = resultado && ejercicio
     ? ejercicio.opciones.find(o => o.id === resultado.idOpcionCorrecta) ?? null
     : null
+  const indiceFoco = ejercicio && seleccion ? ejercicio.opciones.findIndex(o => o.id === seleccion) : 0
 
   return (
     <div className="flex min-h-screen flex-col bg-fondo">
@@ -201,13 +252,56 @@ export function EjercicioPage() {
               />
             )}
 
-            <OpcionesDeRespuesta
-              opciones={ejercicio.opciones}
-              seleccion={seleccion}
-              onSeleccionar={setSeleccion}
-              correccion={resultado}
-              disabled={enviando}
-            />
+            <div role="radiogroup" aria-label="Opciones de respuesta" className="mt-7 grid gap-3.5 sm:grid-cols-2">
+              {ejercicio.opciones.map((o, i) => {
+                const est = estiloOpcion(o, seleccion, resultado)
+                const etiqueta = etiquetaOpcion(o, resultado)
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    ref={el => { refOpciones.current[i] = el }}
+                    role="radio"
+                    aria-checked={seleccion === o.id}
+                    tabIndex={respondido ? -1 : i === Math.max(0, indiceFoco) ? 0 : -1}
+                    disabled={respondido || enviando}
+                    onClick={() => setSeleccion(o.id)}
+                    onKeyDown={e => teclasOpciones(e, i)}
+                    className={cn(
+                      'flex items-center gap-4 rounded-tarjeta border-2 border-b-[5px] px-5 py-5 text-left transition-[transform,border-color,background-color,opacity] disabled:cursor-default',
+                      est.caja,
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn('grid size-[34px] shrink-0 place-items-center rounded-ficha font-titular text-sm font-bold', est.ficha)}
+                    >
+                      {o.letra}
+                    </span>
+                    <span className={cn('min-w-0 flex-1 text-lg font-semibold', est.texto)}>
+                      {o.descripcion}
+                      {o.imagen && (
+                        <img
+                          src={urlDeArchivo(o.imagen)}
+                          alt={`Opción ${o.letra}`}
+                          className="mt-2.5 max-h-[220px] w-full rounded-ficha border border-borde object-contain"
+                        />
+                      )}
+                    </span>
+                    {etiqueta && (
+                      <span
+                        className={cn(
+                          'max-w-[84px] shrink-0 text-right text-[11px] leading-[1.25] font-bold tracking-[0.06em] uppercase sm:max-w-none',
+                          etiqueta.color,
+                        )}
+                      >
+                        {etiqueta.texto}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
 
             <div className="tarjeta mt-6 flex flex-col gap-5 rounded-[20px] px-6 py-5 sm:flex-row sm:items-center sm:gap-[22px]">
               <div className="shrink-0">
