@@ -5,11 +5,11 @@ import { cn } from 'cn'
 import { useAuth } from '@/auth/AuthContext'
 import { Marca } from '@/components/Marca'
 
-function Enlace({ to, children }: { to: string; children: React.ReactNode }) {
+function Enlace({ to, end = true, children }: { to: string; end?: boolean; children: React.ReactNode }) {
   return (
     <NavLink
       to={to}
-      end
+      end={end}
       className={({ isActive }) =>
         cn(
           'relative inline-flex h-11 items-center px-0.5 text-base font-bold whitespace-nowrap transition-colors',
@@ -54,8 +54,14 @@ export function BarraSuperior() {
             aria-label="Secciones"
             className="order-3 -mx-5 w-full border-t border-borde px-5 md:order-2 md:mx-0 md:w-auto md:border-0 md:px-0"
           >
-            <ul className="flex items-center gap-7">
+            <ul className="flex items-center gap-6 overflow-x-auto md:gap-7 md:overflow-visible">
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
+              {!esAdmin && (
+                <>
+                  <li><Enlace to="/simulacros" end={false}>Simulacros</Enlace></li>
+                  <li><Enlace to="/estadisticas">Mis estadísticas</Enlace></li>
+                </>
+              )}
               <li><Enlace to="/perfil">Mi perfil</Enlace></li>
             </ul>
           </nav>
