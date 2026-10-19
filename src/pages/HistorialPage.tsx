@@ -225,6 +225,7 @@ export function HistorialPage() {
                 )}
               >
                 <b>Retroalimentación:</b> {detalle.retroalimentacion}
+                {!detalle.esCorrecto && <p className="mt-2"><b>Tipo de error:</b> {detalle.tipoError ?? "Sin clasificación registrada"}</p>}
               </div>
 
               <p className="text-xs text-texto-suave">El detalle muestra los datos tal como se registraron en su momento.</p>

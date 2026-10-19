@@ -12,6 +12,7 @@ import { RestablecerPage } from '@/pages/RestablecerPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { BancoPage } from '@/pages/BancoPage'
 import { EjercicioPage } from '@/pages/EjercicioPage'
+import { ErroresPage } from '@/pages/ErroresPage'
 import { HistorialPage } from '@/pages/HistorialPage'
 import { EjercicioFormPage } from '@/pages/admin/EjercicioFormPage'
 import { EjercicioDetallePage } from '@/pages/admin/EjercicioDetallePage'
@@ -48,6 +49,7 @@ export default function App() {
         <Route element={<Privado><BarraSuperior /></Privado>}>
           <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/banco" element={<Privado rol="Estudiante"><BancoPage /></Privado>} />
+          <Route path="/estadisticas" element={<Privado rol="Estudiante"><ErroresPage /></Privado>} />
           <Route path="/historial" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
           <Route path="/historial/:id" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
           <Route path="/admin/banco" element={<Privado rol="Administrador"><BancoPage /></Privado>} />

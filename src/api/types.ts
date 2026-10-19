@@ -67,6 +67,7 @@ export interface IntentoDetalle {
   componente: string; competencia: string; nivel: string; estadoEjercicio: string
   opciones: OpcionRevisada[]; esCorrecto: boolean; nivelConfianza: number; fechaHora: string
   retroalimentacion: string
+  tipoError: string | null
 }
 
 export interface ImagenSubida { nombre: string; url: string }
@@ -74,5 +75,11 @@ export interface ImagenSubida { nombre: string; url: string }
 export interface ResultadoIntento {
   idIntento: number; esCorrecto: boolean; idOpcionSeleccionada: number; idOpcionCorrecta: number | null
   retroalimentacion: string; retroalimentacionDisponible: boolean; nivelConfianza: number
-  respondidoEn: string; numeroIntento: number; repetido: boolean
+  respondidoEn: string; numeroIntento: number; repetido: boolean; tipoError: string | null
+}
+
+export interface ErroresDelEstudiante {
+  totalIncorrectos: number; sinClasificar: number; distribucion: DistribucionDeError[]
+  tipoPredominante: string | null; mensajeOrientador: string | null
+  idComponenteFiltro: number | null; componentesConIntentos: Item[]
 }

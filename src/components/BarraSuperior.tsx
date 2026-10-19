@@ -52,11 +52,12 @@ export function BarraSuperior() {
 
           <nav
             aria-label="Secciones"
-            className="order-3 -mx-5 w-full border-t border-borde px-5 md:order-2 md:mx-0 md:w-auto md:border-0 md:px-0"
+            className="order-3 -mx-5 w-full overflow-x-auto border-t border-borde px-5 md:order-2 md:mx-0 md:w-auto md:border-0 md:px-0"
           >
-            <ul className="flex items-center gap-7">
+            <ul className="flex min-w-max items-center gap-7">
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
               {!esAdmin && <li><Enlace to="/historial">Historial</Enlace></li>}
+              {!esAdmin && <li><Enlace to="/estadisticas">Mis errores</Enlace></li>}
               <li><Enlace to="/perfil">Mi perfil</Enlace></li>
             </ul>
           </nav>

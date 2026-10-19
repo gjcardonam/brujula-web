@@ -357,6 +357,7 @@ export function EjercicioPage() {
                 {resultado.retroalimentacionDisponible
                   ? resultado.retroalimentacion
                   : 'Todavía no hay una explicación escrita para la opción que elegiste.'}
+                {!resultado.esCorrecto && resultado.tipoError && <span className="block font-bold">Tipo de error: {resultado.tipoError}</span>}
                 {!resultado.esCorrecto && opcionCorrecta && (
                   <>
                     {' '}La respuesta correcta es{' '}
