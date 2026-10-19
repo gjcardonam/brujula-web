@@ -12,7 +12,7 @@ function Enlace({ to, children }: { to: string; children: React.ReactNode }) {
       end
       className={({ isActive }) =>
         cn(
-          'relative inline-flex h-11 items-center px-0.5 text-base font-bold whitespace-nowrap transition-colors',
+          'relative inline-flex h-11 items-center justify-center px-0.5 text-xs min-[380px]:text-sm md:text-base font-bold whitespace-nowrap transition-colors',
           'after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:transition-colors md:after:-bottom-[15px]',
           isActive ? 'text-marino-800 after:bg-ambar-500' : 'text-texto-suave after:bg-transparent hover:text-marino-800',
         )
@@ -52,9 +52,9 @@ export function BarraSuperior() {
 
           <nav
             aria-label="Secciones"
-            className="order-3 -mx-5 w-full overflow-x-auto border-t border-borde px-5 md:order-2 md:mx-0 md:w-auto md:border-0 md:px-0"
+            className="order-3 w-full border-t border-borde md:order-2 md:w-auto md:border-0"
           >
-            <ul className="flex min-w-max items-center gap-7">
+            <ul className={cn('grid items-center gap-1 md:flex md:gap-6', esAdmin ? 'grid-cols-2' : 'grid-cols-4')}>
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
               {!esAdmin && <li><Enlace to="/historial">Historial</Enlace></li>}
               {!esAdmin && <li><Enlace to="/estadisticas">Mis errores</Enlace></li>}
