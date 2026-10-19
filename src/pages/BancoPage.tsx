@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, LayoutGrid, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from 'cn'
 import { api, mensajeDe } from '@/api/client'
 import type { Componentes, Pagina, Tarjeta } from '@/api/types'
@@ -132,6 +133,7 @@ export function BancoPage() {
   const [cargandoLista, setCargandoLista] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reintento, setReintento] = useState(0)
+  const [cambiandoEstado, setCambiandoEstado] = useState<number | null>(null)
 
   useEffect(() => {
     let vivo = true
@@ -197,6 +199,24 @@ export function BancoPage() {
 
   const nombreComponente = listaComponentes.find(c => c.id === componente)?.nombre
   const cantidadComponente = listaComponentes.find(c => c.id === componente)?.cantidad ?? 0
+
+  const cambiarEstado = useCallback(async (tarjeta: Tarjeta) => {
+    const nuevo = tarjeta.estado === 'Activo' ? 'Desactivado' : 'Activo'
+    setCambiandoEstado(tarjeta.id)
+    try {
+      await api(`/ejercicios/${tarjeta.id}/estado`, { method: 'PATCH', body: { estado: nuevo } })
+      toast(nuevo === 'Activo' ? `Activamos el ejercicio ${tarjeta.numero}` : `Desactivamos el ejercicio ${tarjeta.numero}`, {
+        description: nuevo === 'Activo'
+          ? 'Ya está disponible para los estudiantes.'
+          : 'Deja de estar disponible, pero conserva sus intentos.',
+      })
+      setReintento(n => n + 1)
+    } catch (e) {
+      setError(mensajeDe(e))
+    } finally {
+      setCambiandoEstado(null)
+    }
+  }, [])
 
   const avisoDeError = error && (
     <Aviso>
@@ -388,7 +408,15 @@ export function BancoPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {datos.contenido.map(t =>
               esAdmin
-                ? <TarjetaEjercicioAdmin key={t.id} tarjeta={t} mostrarComponente={componente === null} />
+                ? (
+                    <TarjetaEjercicioAdmin
+                      key={t.id}
+                      tarjeta={t}
+                      mostrarComponente={componente === null}
+                      cambiandoEstado={cambiandoEstado === t.id}
+                      onCambiarEstado={t => void cambiarEstado(t)}
+                    />
+                  )
                 : (
                     <TarjetaEjercicio
                       key={t.id}

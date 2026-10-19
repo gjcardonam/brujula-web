@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, ImagePlus, Loader2, Lock, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from 'cn'
 import { api, mensajeDe, urlDeArchivo } from '@/api/client'
-import type { Catalogos, EjercicioCreado, EjercicioRequest, ImagenSubida } from '@/api/types'
+import type { Catalogos, EjercicioAdmin, EjercicioRequest, ImagenSubida } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
 import { Campo } from '@/components/Campo'
 import { Button } from '@/components/ui/button'
@@ -16,10 +16,13 @@ import { enfocarPrimerError } from '@/utils/foco'
 
 interface OpcionForm {
   clave: string
+  id: number | null
   descripcion: string
   imagen: string | null
   esCorrecta: boolean
   retroalimentacion: string
+  idTipoError: number | null
+  usada: boolean
 }
 
 type ErroresOpcion = { contenido?: string; retroalimentacion?: string }
@@ -37,7 +40,16 @@ const MAX_IMAGEN = 5 * 1024 * 1024
 const letra = (i: number) => String.fromCharCode(65 + i)
 
 function nuevaOpcion(): OpcionForm {
-  return { clave: Math.random().toString(36).slice(2), descripcion: '', imagen: null, esCorrecta: false, retroalimentacion: '' }
+  return {
+    clave: Math.random().toString(36).slice(2),
+    id: null,
+    descripcion: '',
+    imagen: null,
+    esCorrecta: false,
+    retroalimentacion: '',
+    idTipoError: null,
+    usada: false,
+  }
 }
 
 function Esqueleto() {
@@ -57,11 +69,16 @@ function Esqueleto() {
   )
 }
 
-export function CrearEjercicioPage() {
+export function EjercicioFormPage() {
+  const { id } = useParams()
+  const editando = Boolean(id)
   const navigate = useNavigate()
 
   const [cat, setCat] = useState<Catalogos | null>(null)
   const [errorCatalogos, setErrorCatalogos] = useState<string | null>(null)
+  const [cargandoEjercicio, setCargandoEjercicio] = useState(editando)
+  const [numero, setNumero] = useState<number | null>(null)
+  const [tieneIntentos, setTieneIntentos] = useState(false)
   const [enunciado, setEnunciado] = useState('')
   const [imagen, setImagen] = useState<string | null>(null)
   const [idComponente, setIdComponente] = useState<number | null>(null)
@@ -82,12 +99,42 @@ export function CrearEjercicioPage() {
     return () => { vivo = false }
   }, [])
 
+  useEffect(() => {
+    if (!editando) return
+    let vivo = true
+    setCargandoEjercicio(true)
+    api<EjercicioAdmin>(`/ejercicios/${id}`)
+      .then(e => {
+        if (!vivo) return
+        setEnunciado(e.enunciado)
+        setImagen(e.imagenEnunciado)
+        setIdComponente(e.componente.id)
+        setIdCompetencia(e.competencia.id)
+        setIdNivel(e.nivel.id)
+        setNumero(e.numero)
+        setTieneIntentos(e.tieneIntentos)
+        setOpciones(e.opciones.map(o => ({
+          clave: Math.random().toString(36).slice(2),
+          id: o.id,
+          descripcion: o.descripcion ?? '',
+          imagen: o.imagen,
+          esCorrecta: o.esCorrecta,
+          retroalimentacion: o.retroalimentacion,
+          idTipoError: o.tipoError?.id ?? null,
+          usada: o.usadaEnIntentos,
+        })))
+      })
+      .catch(e => { if (vivo) setError(mensajeDe(e)) })
+      .finally(() => { if (vivo) setCargandoEjercicio(false) })
+    return () => { vivo = false }
+  }, [editando, id])
+
   function cambiar(clave: string, cambio: Partial<OpcionForm>) {
     setOpciones(ops => ops.map(o => (o.clave === clave ? { ...o, ...cambio } : o)))
   }
 
   function marcarCorrecta(clave: string) {
-    setOpciones(ops => ops.map(o => ({ ...o, esCorrecta: o.clave === clave })))
+    setOpciones(ops => ops.map(o => ({ ...o, esCorrecta: o.clave === clave, idTipoError: o.clave === clave ? null : o.idTipoError })))
     setErrores(e => ({ ...e, correcta: undefined }))
   }
 
@@ -120,6 +167,7 @@ export function CrearEjercicioPage() {
     if (!idCompetencia) nuevos.competencia = 'Elige una competencia.'
     if (!idNivel) nuevos.nivel = 'Elige un nivel de dificultad.'
     if (opciones.filter(o => o.esCorrecta).length !== 1) nuevos.correcta = 'Marca cuál es la opción correcta.'
+    if (opciones.length < 2) nuevos.correcta = nuevos.correcta ?? 'Deja al menos dos opciones de respuesta.'
     opciones.forEach(o => {
       const e: ErroresOpcion = {}
       if (!o.descripcion.trim() && !o.imagen) e.contenido = 'Escribe el texto de la opción o sube una imagen.'
@@ -143,18 +191,26 @@ export function CrearEjercicioPage() {
       idCompetencia,
       idNivelDificultad: idNivel,
       opciones: opciones.map(o => ({
+        id: o.id,
         descripcion: o.descripcion.trim(),
         imagen: o.imagen,
         esCorrecta: o.esCorrecta,
         retroalimentacion: o.retroalimentacion.trim(),
+        idTipoError: o.esCorrecta ? null : o.idTipoError,
       })),
     }
 
     setGuardando(true)
     try {
-      const r = await api<EjercicioCreado>('/ejercicios', { method: 'POST', body })
-      toast(`Guardamos el ejercicio ${r.numero}`, { description: 'Ya está disponible para los estudiantes.' })
-      navigate('/admin/banco', { replace: true })
+      const r = editando
+        ? await api<EjercicioAdmin>(`/ejercicios/${id}`, { method: 'PUT', body })
+        : await api<EjercicioAdmin>('/ejercicios', { method: 'POST', body })
+      toast(editando ? `Actualizamos el ejercicio ${r.numero}` : `Guardamos el ejercicio ${r.numero}`, {
+        description: editando
+          ? 'Los cambios ya están publicados.'
+          : 'Ya está disponible para los estudiantes.',
+      })
+      navigate(`/admin/ejercicios/${r.id}`, { replace: true })
     } catch (err) {
       setError(mensajeDe(err))
     } finally {
@@ -171,7 +227,7 @@ export function CrearEjercicioPage() {
     )
   }
 
-  if (!cat) {
+  if (!cat || cargandoEjercicio) {
     return (
       <div aria-busy="true" aria-live="polite">
         <span className="sr-only">Cargando el formulario</span>
@@ -184,14 +240,20 @@ export function CrearEjercicioPage() {
     <form onSubmit={guardar} noValidate className="animate-entrar">
       <header className="mb-7">
         <Link
-          to="/admin/banco"
+          to={editando ? `/admin/ejercicios/${id}` : '/admin/banco'}
           className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
         >
           <ArrowLeft className="size-[17px]" aria-hidden="true" />
-          Volver al banco
+          {editando ? `Volver al ejercicio ${numero}` : 'Volver al banco'}
         </Link>
-        <h1 className="mt-4 text-2xl font-bold text-marino-800 sm:text-3xl">Crear ejercicio</h1>
-        <p className="mt-1.5 text-base text-texto-suave">Queda activo y con número propio en cuanto lo guardes.</p>
+        <h1 className="mt-4 text-2xl font-bold text-marino-800 sm:text-3xl">
+          {editando ? `Editar ejercicio ${numero}` : 'Crear ejercicio'}
+        </h1>
+        <p className="mt-1.5 text-base text-texto-suave">
+          {editando
+            ? 'La edición no cambia el número ni el estado del ejercicio.'
+            : 'Queda activo y con número propio en cuanto lo guardes.'}
+        </p>
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.15fr_1fr]">
@@ -301,9 +363,11 @@ export function CrearEjercicioPage() {
           <div className="flex flex-wrap gap-3 border-t border-borde pt-6">
             <Button type="submit" disabled={guardando || subiendo !== null}>
               {guardando && <Loader2 className="animate-spin" aria-hidden="true" />}
-              {guardando ? 'Guardando' : 'Guardar ejercicio'}
+              {guardando ? 'Guardando' : editando ? 'Guardar cambios' : 'Guardar ejercicio'}
             </Button>
-            <Button asChild variant="contorno"><Link to="/admin/banco">Cancelar</Link></Button>
+            <Button asChild variant="contorno">
+              <Link to={editando ? `/admin/ejercicios/${id}` : '/admin/banco'}>Cancelar</Link>
+            </Button>
           </div>
         </section>
 
@@ -314,6 +378,13 @@ export function CrearEjercicioPage() {
               Marca la correcta y explica cada una: esa explicación es la que verá el estudiante.
             </p>
           </div>
+
+          {tieneIntentos && (
+            <Aviso tono="informacion">
+              Este ejercicio ya tiene intentos registrados. Las opciones marcadas como «usada en intentos» no pueden
+              modificarse ni eliminarse; solo su retroalimentación y su tipo de error.
+            </Aviso>
+          )}
 
           {errores.correcta && <Aviso>{errores.correcta}</Aviso>}
 
@@ -326,6 +397,7 @@ export function CrearEjercicioPage() {
                   className={cn(
                     'rounded-tarjeta border-2 p-4 transition-colors sm:p-5',
                     o.esCorrecta ? 'border-exito-600 bg-exito-50' : 'border-borde-fuerte bg-superficie',
+                    o.usada && 'bg-hueso',
                   )}
                 >
                   <legend className="sr-only">Opción {letra(i)}</legend>
@@ -347,20 +419,29 @@ export function CrearEjercicioPage() {
                         o.esCorrecta
                           ? 'border-exito-600 bg-superficie text-exito-700'
                           : 'border-borde-fuerte bg-superficie text-texto-suave hover:border-marino-200',
+                        o.usada && 'cursor-not-allowed opacity-70',
                       )}
                     >
                       <input
                         type="radio"
                         name="opcion-correcta"
                         checked={o.esCorrecta}
+                        disabled={o.usada}
                         onChange={() => marcarCorrecta(o.clave)}
                         className="size-4 accent-[var(--color-exito-600)]"
                       />
                       {o.esCorrecta ? 'Es la correcta' : 'Marcar correcta'}
                     </label>
 
+                    {o.usada && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-marino-100 px-3 py-1.5 text-xs font-bold text-texto-suave">
+                        <Lock className="size-3.5" aria-hidden="true" />
+                        usada en intentos
+                      </span>
+                    )}
+
                     <div className="ml-auto flex items-center gap-1">
-                      {!o.imagen && (
+                      {!o.imagen && !o.usada && (
                         <>
                           <input
                             ref={el => { archivos.current[o.clave] = el }}
@@ -383,7 +464,7 @@ export function CrearEjercicioPage() {
                           </Button>
                         </>
                       )}
-                      {opciones.length > 2 && (
+                      {opciones.length > 2 && !o.usada && (
                         <Button
                           type="button"
                           variant="fantasma"
@@ -403,6 +484,7 @@ export function CrearEjercicioPage() {
                         <Input
                           {...p}
                           value={o.descripcion}
+                          disabled={o.usada}
                           onChange={e => cambiar(o.clave, { descripcion: e.target.value })}
                         />
                       )}
@@ -411,10 +493,12 @@ export function CrearEjercicioPage() {
                     {o.imagen && (
                       <div className="flex flex-wrap items-center gap-3">
                         <img src={urlDeArchivo(o.imagen)} alt={`Opción ${letra(i)}`} className="max-h-20 rounded-ficha border border-borde" />
-                        <Button type="button" variant="contorno" size="sm" onClick={() => cambiar(o.clave, { imagen: null })}>
-                          <Trash2 aria-hidden="true" />
-                          Quitar imagen
-                        </Button>
+                        {!o.usada && (
+                          <Button type="button" variant="contorno" size="sm" onClick={() => cambiar(o.clave, { imagen: null })}>
+                            <Trash2 aria-hidden="true" />
+                            Quitar imagen
+                          </Button>
+                        )}
                       </div>
                     )}
 
@@ -429,6 +513,28 @@ export function CrearEjercicioPage() {
                         />
                       )}
                     </Campo>
+
+                    {!o.esCorrecta && (
+                      <Campo
+                        etiqueta="Tipo de error que representa"
+                        ayuda="Sirve para clasificar los errores del dashboard. Si lo dejas vacío se toma como error cognitivo."
+                      >
+                        {p => (
+                          <Select
+                            value={o.idTipoError ? String(o.idTipoError) : undefined}
+                            onValueChange={v => cambiar(o.clave, { idTipoError: v === 'ninguno' ? null : Number(v) })}
+                          >
+                            <SelectTrigger {...p} className="w-full">
+                              <SelectValue placeholder="Sin clasificar (error cognitivo)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ninguno">Sin clasificar (error cognitivo)</SelectItem>
+                              {cat.tiposError.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nombre}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </Campo>
+                    )}
                   </div>
                 </fieldset>
               )

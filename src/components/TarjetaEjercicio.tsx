@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from 'cn'
 import type { Tarjeta } from '@/api/types'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-
-const EXPLICACION_DESHABILITADO = 'Disponible en una próxima entrega'
 
 function Cabecera({ tarjeta, mostrarComponente }: { tarjeta: Tarjeta; mostrarComponente: boolean }) {
   const tono = tonoDeComponente(tarjeta.componente)
@@ -69,9 +67,13 @@ export function TarjetaEjercicio({
 export function TarjetaEjercicioAdmin({
   tarjeta,
   mostrarComponente = true,
+  cambiandoEstado = false,
+  onCambiarEstado,
 }: {
   tarjeta: Tarjeta
   mostrarComponente?: boolean
+  cambiandoEstado?: boolean
+  onCambiarEstado?: (tarjeta: Tarjeta) => void
 }) {
   const desactivado = tarjeta.estado === 'Desactivado'
   return (
@@ -94,39 +96,24 @@ export function TarjetaEjercicioAdmin({
       </span>
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-borde pt-4">
-        <Button
-          type="button"
-          variant="contorno"
-          size="sm"
-          disabled
-          aria-disabled="true"
-          tabIndex={-1}
-          title={EXPLICACION_DESHABILITADO}
-        >
-          Editar
+        <Button asChild variant="contorno" size="sm">
+          <Link to={`/admin/ejercicios/${tarjeta.id}/editar`}>Editar</Link>
         </Button>
-        <Button
-          type="button"
-          variant="contorno"
-          size="sm"
-          disabled
-          aria-disabled="true"
-          tabIndex={-1}
-          title={EXPLICACION_DESHABILITADO}
-        >
-          Ver más
+        <Button asChild variant="contorno" size="sm">
+          <Link to={`/admin/ejercicios/${tarjeta.id}`}>Ver más</Link>
         </Button>
-        <Button
-          type="button"
-          variant="contorno"
-          size="sm"
-          disabled
-          aria-disabled="true"
-          tabIndex={-1}
-          title={EXPLICACION_DESHABILITADO}
-        >
-          {desactivado ? 'Activar' : 'Desactivar'}
-        </Button>
+        {onCambiarEstado && (
+          <Button
+            type="button"
+            variant="contorno"
+            size="sm"
+            disabled={cambiandoEstado}
+            onClick={() => onCambiarEstado(tarjeta)}
+          >
+            {cambiandoEstado && <Loader2 className="animate-spin" aria-hidden="true" />}
+            {desactivado ? 'Activar' : 'Desactivar'}
+          </Button>
+        )}
       </div>
     </article>
   )

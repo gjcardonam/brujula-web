@@ -56,6 +56,7 @@ export function BarraSuperior() {
           >
             <ul className="flex items-center gap-7">
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
+              {!esAdmin && <li><Enlace to="/historial">Historial</Enlace></li>}
               <li><Enlace to="/perfil">Mi perfil</Enlace></li>
             </ul>
           </nav>

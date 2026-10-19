@@ -12,7 +12,9 @@ import { RestablecerPage } from '@/pages/RestablecerPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { BancoPage } from '@/pages/BancoPage'
 import { EjercicioPage } from '@/pages/EjercicioPage'
-import { CrearEjercicioPage } from '@/pages/admin/CrearEjercicioPage'
+import { HistorialPage } from '@/pages/HistorialPage'
+import { EjercicioFormPage } from '@/pages/admin/EjercicioFormPage'
+import { EjercicioDetallePage } from '@/pages/admin/EjercicioDetallePage'
 
 function Privado({ rol, children }: { rol?: 'Estudiante' | 'Administrador'; children: ReactElement }) {
   const { usuario } = useAuth()
@@ -46,8 +48,12 @@ export default function App() {
         <Route element={<Privado><BarraSuperior /></Privado>}>
           <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/banco" element={<Privado rol="Estudiante"><BancoPage /></Privado>} />
+          <Route path="/historial" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
+          <Route path="/historial/:id" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
           <Route path="/admin/banco" element={<Privado rol="Administrador"><BancoPage /></Privado>} />
-          <Route path="/admin/ejercicios/nuevo" element={<Privado rol="Administrador"><CrearEjercicioPage /></Privado>} />
+          <Route path="/admin/ejercicios/nuevo" element={<Privado rol="Administrador"><EjercicioFormPage /></Privado>} />
+          <Route path="/admin/ejercicios/:id" element={<Privado rol="Administrador"><EjercicioDetallePage /></Privado>} />
+          <Route path="/admin/ejercicios/:id/editar" element={<Privado rol="Administrador"><EjercicioFormPage /></Privado>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
