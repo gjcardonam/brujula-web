@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ArrowUpRight, BookOpen, Brain, ChevronDown, Eye, History, Lightbulb, RefreshCw, Wind } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BookOpen, Brain, ChevronDown, Compass, Eye, Footprints, History, Lightbulb, RefreshCw, Wind } from 'lucide-react'
 import { cn } from 'cn'
 import { api, mensajeDe } from '@/api/client'
 import type { ErroresDelEstudiante } from '@/api/types'
@@ -113,14 +113,28 @@ export function ErroresPage() {
   return <div className="space-y-8 sm:space-y-10">
     <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div>
+        <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-widest text-ocre-700 uppercase"><Compass className="size-4" aria-hidden="true" /> Tu progreso</p>
         <h1 className="text-3xl font-bold text-marino-800 sm:text-[36px] sm:leading-tight">Mis errores</h1>
-        <p className="mt-2 max-w-2xl text-texto-suave">Así se reparten tus respuestas incorrectas según su causa más probable, con qué hacer en cada caso.</p>
+        <p className="mt-2 text-texto-suave">Entiende por qué fallaste y qué hacer en el próximo ejercicio.</p>
       </div>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <Link to="/historial" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-marino-800 underline-offset-4 hover:underline"><History className="size-4" aria-hidden="true" /> Ver mi historial <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
-        <Button asChild variant="acento"><Link to={practica}>{nombreComponente ? `Practicar ${nombreComponente.toLowerCase()}` : 'Practicar'} <ArrowRight aria-hidden="true" /></Link></Button>
-      </div>
+      <Link to="/historial" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-marino-800 underline-offset-4 hover:underline"><History className="size-4" aria-hidden="true" /> Ver mi historial <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
     </div>
+
+    <section data-sobre-marino className="relative isolate overflow-hidden rounded-panel bg-marino-800 p-6 text-white sm:p-9 lg:px-10 lg:py-9">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full border border-white/10" />
+      <div aria-hidden="true" className="pointer-events-none absolute -top-12 -right-4 size-56 rounded-full border border-white/10" />
+      <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-xl">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white"><span aria-hidden="true" className="size-1.5 rounded-full bg-ambar-500" /> Saber 11 · Matemáticas</span>
+          <h2 className="mt-5 text-[28px] leading-[1.15] font-bold tracking-tight sm:text-[34px]">Revisa en qué te equivocas<br /><span className="text-ambar-500">y llega mejor preparado a la prueba.</span></h2>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-marino-100">Cada vez que fallas un ejercicio, Brújula mira qué tan seguro estabas y cómo te ha ido en ese tema para darte una idea de qué pasó.</p>
+        </div>
+        <div className="shrink-0 lg:max-w-64">
+          <Button asChild variant="acento" size="lg" className="w-full sm:w-auto lg:w-full"><Link to={practica}>Seguir practicando <ArrowRight aria-hidden="true" /></Link></Button>
+          <p className="mt-3 text-xs leading-relaxed text-marino-200">{nombreComponente ? `Ejercicios de ${nombreComponente.toLowerCase()}.` : 'Ejercicios de todos los componentes.'}</p>
+        </div>
+      </div>
+    </section>
 
     <section aria-labelledby="patrones-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -171,12 +185,12 @@ export function ErroresPage() {
                     <p className={cn('mt-1 text-xs font-bold', t.texto)}>Error {t.etiqueta === 'Cognitivo' ? 'cognitivo' : `de ${t.etiqueta.toLowerCase()}`}</p>
                     <p className="mt-3 min-h-16 text-sm leading-relaxed text-texto-suave">{t.descripcion}</p>
                     <button type="button" aria-expanded={expandido} aria-controls={`consejo-error-${i}`} onClick={() => setAbierto(expandido ? null : t.tipo)} className={cn('mt-4 flex min-h-11 w-full items-center justify-between gap-2 border-t pt-3 text-left text-sm font-bold', t.borde, t.texto)}>
-                      {expandido ? 'Ocultar' : 'Qué puedo hacer'}<ChevronDown className={cn('size-4 shrink-0 transition-transform', expandido && 'rotate-180')} aria-hidden="true" />
+                      {expandido ? 'Ocultar consejo' : 'Qué puedo hacer'}<ChevronDown className={cn('size-4 shrink-0 transition-transform', expandido && 'rotate-180')} aria-hidden="true" />
                     </button>
                   </div>
                   <div id={`consejo-error-${i}`} hidden={!expandido} className={cn('border-t px-5 py-5 xl:px-6', t.fondo, t.borde)}>
                     <ol className="space-y-3">{t.pasos.map((paso, n) => <li key={paso} className="flex gap-2.5 text-sm leading-relaxed text-marino-800"><span className={cn('mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-superficie text-xs font-bold', t.texto)}>{n + 1}</span><span>{paso}</span></li>)}</ol>
-                    <Link to={t.tipo === 'Error cognitivo' ? '/historial' : practica} className={cn('mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-bold underline-offset-4 hover:underline', t.texto)}>{t.tipo === 'Error cognitivo' ? 'Ir a mi historial' : 'Practicar'}<ArrowRight className="size-4" aria-hidden="true" /></Link>
+                    <Link to={t.tipo === 'Error cognitivo' ? '/historial' : practica} className={cn('mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-bold underline-offset-4 hover:underline', t.texto)}>{t.tipo === 'Error cognitivo' ? 'Ver mis explicaciones' : 'Practicar'}<ArrowRight className="size-4" aria-hidden="true" /></Link>
                   </div>
                 </article>
               })}
@@ -187,6 +201,10 @@ export function ErroresPage() {
       </div>
     </section>
 
+    <section className="flex flex-col gap-5 rounded-panel border border-borde-fuerte bg-hueso p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+      <div className="flex items-start gap-4"><span className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-superficie text-marino-700 sm:flex"><Footprints className="size-5" aria-hidden="true" /></span><div><h2 className="text-lg font-bold text-marino-800">¿Listo para otro ejercicio?</h2><p className="mt-1 max-w-lg text-sm text-texto-suave">Escoge uno de los consejos de arriba y pruébalo en tu próximo intento.</p></div></div>
+      <Button asChild variant="contorno" className="w-full sm:w-auto"><Link to={practica}>Ir al banco <ArrowRight aria-hidden="true" /></Link></Button>
+    </section>
     <details className="group text-sm text-texto-suave">
       <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-marino-700"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
       <p className="mt-3 max-w-3xl leading-relaxed">Solo se clasifican las respuestas incorrectas. Si marcaste confianza 4 o 5, cuenta como error de ansiedad. Si venías acertando el 70 % o más de tus últimos intentos en ese componente o competencia, cuenta como error de hábito. En los demás casos cuenta como error cognitivo. Cuando un tipo pasa de la mitad de tus errores, lo destacamos arriba con una recomendación.</p>
