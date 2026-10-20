@@ -1,15 +1,46 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
 import { cn } from 'cn'
 import { api, mensajeDe, urlDeArchivo } from '@/api/client'
-import type { IntentoDetalle, IntentoResumen, Pagina } from '@/api/types'
+import type { IntentoDetalle, IntentoResumen, OpcionRevisada, Pagina } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
+import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { EstadoVacio } from '@/components/EstadoVacio'
+import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
+import { cajaDeOpcion, ContenidoDeOpcion, estiloOpcion, type EstadoOpcion } from '@/components/Opciones'
 import { Paginacion } from '@/components/Paginacion'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fechaHora } from '@/utils/formato'
+
+function estadoOpcion(o: OpcionRevisada): EstadoOpcion {
+  if (o.esCorrecta) return 'correcta'
+  if (o.seleccionada) return 'incorrecta'
+  return 'descartada'
+}
+
+function PildoraComponente({ nombre, className }: { nombre: string; className?: string }) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold whitespace-nowrap', tonoDeComponente(nombre).pildora, className)}>
+      <IconoComponente nombre={nombre} className="size-[13px]" />
+      {nombre}
+    </span>
+  )
+}
+
+function Resultado({ correcto, desactivado }: { correcto: boolean; desactivado: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold whitespace-nowrap',
+        desactivado ? 'bg-marino-100 text-texto-suave' : correcto ? 'bg-exito-50 text-exito-700' : 'bg-error-50 text-error-700',
+      )}
+    >
+      <span aria-hidden="true" className={cn('size-1.5 rounded-full', desactivado ? 'bg-texto-tenue' : correcto ? 'bg-exito-600' : 'bg-error-600')} />
+      {correcto ? 'Correcto' : 'Incorrecto'}
+    </span>
+  )
+}
 
 function EsqueletoDeLista() {
   return (
@@ -24,8 +55,8 @@ function EsqueletoDeDetalle() {
     <div className="space-y-4">
       <Skeleton className="h-5 w-56" />
       <Skeleton className="h-20 w-full rounded-control" />
-      <Skeleton className="h-12 w-full rounded-ficha" />
-      <Skeleton className="h-12 w-full rounded-ficha" />
+      <Skeleton className="h-[82px] w-full rounded-tarjeta" />
+      <Skeleton className="h-[82px] w-full rounded-tarjeta" />
     </div>
   )
 }
@@ -119,19 +150,18 @@ export function HistorialPage() {
                         to={`/historial/${i.id}?pagina=${pagina}`}
                         aria-current={seleccionado ? 'true' : undefined}
                         className={cn(
-                          'block px-1 py-3 transition-colors hover:bg-hueso',
+                          'block rounded-ficha px-2 py-3 transition-colors hover:bg-hueso',
                           desactivado && 'bg-hueso',
                           seleccionado && 'bg-marino-50',
                         )}
                       >
-                        <span className="flex items-baseline justify-between gap-3">
-                          <span className="font-bold text-marino-800">Ejercicio #{i.numeroEjercicio}</span>
-                          <span className={cn('text-sm font-bold', desactivado ? 'text-texto-suave' : i.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
-                            {i.esCorrecto ? 'Correcto' : 'Incorrecto'}
-                          </span>
+                        <span className="flex items-center justify-between gap-3">
+                          <span className="font-titular font-bold text-marino-800">Ejercicio #{i.numeroEjercicio}</span>
+                          <Resultado correcto={i.esCorrecto} desactivado={desactivado} />
                         </span>
-                        <span className="mt-1 block text-sm text-texto-suave">
-                          {i.componente} · {i.competencia} · {i.nivel}
+                        <span className="mt-2 flex flex-col items-start gap-1.5 text-sm text-texto-suave">
+                          <PildoraComponente nombre={i.componente} />
+                          <span>{i.competencia} · {i.nivel}</span>
                         </span>
                         <span className="mt-0.5 block text-xs text-texto-suave">{fechaHora(i.fechaHora)}</span>
                       </Link>
@@ -143,12 +173,12 @@ export function HistorialPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b-2 border-borde-fuerte text-xs font-bold tracking-wide text-texto-suave uppercase">
-                      <th scope="col" className="py-2.5 pr-3">Ejercicio</th>
+                      <th scope="col" className="py-2.5 pr-3 pl-2">Ejercicio</th>
                       <th scope="col" className="py-2.5 pr-3">Componente</th>
                       <th scope="col" className="py-2.5 pr-3">Competencia</th>
                       <th scope="col" className="py-2.5 pr-3">Nivel</th>
                       <th scope="col" className="py-2.5 pr-3">Resultado</th>
-                      <th scope="col" className="py-2.5 pr-3">Fecha y hora</th>
+                      <th scope="col" className="py-2.5 pr-2">Fecha y hora</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -158,6 +188,7 @@ export function HistorialPage() {
                       return (
                         <tr
                           key={i.id}
+                          aria-current={seleccionado ? 'true' : undefined}
                           onClick={() => navigate(`/historial/${i.id}?pagina=${pagina}`)}
                           className={cn(
                             'cursor-pointer border-b border-borde transition-colors hover:bg-hueso',
@@ -165,16 +196,21 @@ export function HistorialPage() {
                             seleccionado && 'bg-marino-50',
                           )}
                         >
-                          <td className="py-3 pr-3 font-bold text-marino-800">#{i.numeroEjercicio}</td>
-                          <td className="py-3 pr-3 text-texto-suave">{i.componente}</td>
+                          <td className="py-3 pr-3 pl-2">
+                            <Link
+                              to={`/historial/${i.id}?pagina=${pagina}`}
+                              aria-label={`Ver el intento del ejercicio ${i.numeroEjercicio}`}
+                              onClick={e => e.stopPropagation()}
+                              className="font-titular font-bold whitespace-nowrap text-marino-800 underline-offset-4 hover:underline"
+                            >
+                              #{i.numeroEjercicio}
+                            </Link>
+                          </td>
+                          <td className="py-3 pr-3"><PildoraComponente nombre={i.componente} /></td>
                           <td className="py-3 pr-3 text-texto-suave">{i.competencia}</td>
                           <td className="py-3 pr-3 text-texto-suave">{i.nivel}</td>
-                          <td className="py-3 pr-3">
-                            <span className={cn('font-bold', desactivado ? 'text-texto-suave' : i.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
-                              {i.esCorrecto ? 'Correcto' : 'Incorrecto'}
-                            </span>
-                          </td>
-                          <td className="py-3 text-texto-suave">{fechaHora(i.fechaHora)}</td>
+                          <td className="py-3 pr-3"><Resultado correcto={i.esCorrecto} desactivado={desactivado} /></td>
+                          <td className="py-3 pr-2 text-texto-suave">{fechaHora(i.fechaHora)}</td>
                         </tr>
                       )
                     })}
@@ -197,6 +233,7 @@ export function HistorialPage() {
               pagina={datos.pagina}
               totalPaginas={datos.totalPaginas}
               onCambiar={p => setParams({ pagina: String(p) })}
+              etiqueta="Paginación del historial"
             />
           )}
         </section>
@@ -210,10 +247,13 @@ export function HistorialPage() {
 
           {id && !cargandoDetalle && detalle && (
             <div className="space-y-4">
-              <p className="text-sm text-texto-suave">
-                Ejercicio #{detalle.numeroEjercicio} · {fechaHora(detalle.fechaHora)} · {detalle.componente} ·{' '}
-                {detalle.competencia} · {detalle.nivel}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-sm text-texto-suave">
+                <span className={cn('inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold', tonoDeComponente(detalle.componente).pildora)}>
+                  <IconoComponente nombre={detalle.componente} className="size-[15px]" />
+                  {detalle.componente} · {detalle.nivel}
+                </span>
+                <span>Ejercicio #{detalle.numeroEjercicio} · {fechaHora(detalle.fechaHora)} · {detalle.competencia}</span>
+              </div>
 
               {detalle.estadoEjercicio === 'Activo' && (
                 <Button asChild variant="contorno" size="sm">
@@ -232,52 +272,31 @@ export function HistorialPage() {
                 <img src={urlDeArchivo(detalle.imagenEnunciado)} alt="Imagen del enunciado" className="max-h-64 rounded-ficha border border-borde" />
               )}
 
-              <ul className="space-y-2">
-                {detalle.opciones.map(o => (
-                  <li
-                    key={o.id}
-                    className={cn(
-                      'flex items-start gap-3 rounded-ficha border-2 px-3.5 py-2.5 text-sm',
-                      o.esCorrecta ? 'border-exito-200 bg-exito-50' : o.seleccionada ? 'border-error-200 bg-error-50' : 'border-borde bg-superficie',
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'grid size-6 shrink-0 place-items-center rounded-ficha text-xs font-bold',
-                        o.esCorrecta ? 'bg-exito-600 text-white' : o.seleccionada ? 'bg-error-600 text-white' : 'bg-hueso text-texto-suave',
-                      )}
-                    >
-                      {o.letra}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-marino-800">{o.descripcion}</span>
-                      {o.seleccionada && <span className="ml-1 font-bold text-texto-suave">— tu respuesta</span>}
-                      {o.esCorrecta && <span className="ml-1 font-bold text-exito-700">— respuesta correcta</span>}
-                      {o.imagen && <img src={urlDeArchivo(o.imagen)} alt={`Opción ${o.letra}`} className="mt-2 max-h-20 rounded-ficha border border-borde" />}
-                    </div>
-                  </li>
-                ))}
+              <ul aria-label="Opciones de respuesta" className="grid gap-3">
+                {detalle.opciones.map(o => {
+                  const estado = estadoOpcion(o)
+                  return (
+                    <li key={o.id} className={cn(cajaDeOpcion, estiloOpcion(estado).caja)}>
+                      <ContenidoDeOpcion opcion={o} estado={estado} tuRespuesta={o.seleccionada} />
+                    </li>
+                  )
+                })}
               </ul>
 
-              <p className="text-sm text-texto-suave">
-                Resultado:{' '}
-                <span className={cn('inline-flex items-center gap-1 font-bold', detalle.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
-                  {detalle.esCorrecto ? <Check className="size-4" aria-hidden="true" /> : <X className="size-4" aria-hidden="true" />}
-                  {detalle.esCorrecto ? 'Correcto' : 'Incorrecto'}
-                </span>{' '}
-                · Nivel de confianza registrado: {detalle.nivelConfianza} de 5
-              </p>
-
-              <div
-                className={cn(
-                  'rounded-control border-2 px-4 py-3.5 text-sm leading-relaxed',
-                  detalle.esCorrecto ? 'border-exito-200 bg-exito-50 text-exito-900' : 'border-error-200 bg-error-50 text-error-900',
-                )}
-              >
-                <b>Retroalimentación:</b> {detalle.retroalimentacion}
-                {!detalle.esCorrecto && <p className="mt-2"><b>Tipo de error:</b> {detalle.tipoError ?? "Sin clasificación registrada"}</p>}
-              </div>
+              <FranjaDeCorreccion
+                enLinea
+                correcto={detalle.esCorrecto}
+                titulo={`Resultado: ${detalle.esCorrecto ? 'Correcto' : 'Incorrecto'}`}
+                detalle={
+                  <>
+                    <strong>Retroalimentación:</strong> {detalle.retroalimentacion}
+                    {!detalle.esCorrecto && (
+                      <span className="mt-2 block"><strong>Tipo de error:</strong> {detalle.tipoError ?? 'Sin clasificación registrada'}</span>
+                    )}
+                  </>
+                }
+                nota={`Nivel de confianza registrado: ${detalle.nivelConfianza} de 5`}
+              />
 
               <p className="text-xs text-texto-suave">El detalle muestra los datos tal como se registraron en su momento.</p>
 

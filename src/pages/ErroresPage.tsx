@@ -5,8 +5,10 @@ import { cn } from 'cn'
 import { api, mensajeDe } from '@/api/client'
 import type { ErroresDelEstudiante } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
+import { Campo } from '@/components/Campo'
 import { EstadoVacio } from '@/components/EstadoVacio'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { pct } from '@/utils/formato'
 
@@ -36,6 +38,8 @@ const TIPOS = [
     pasos: ['Ponte un tiempo por ejercicio, como en el Saber 11.', 'Antes de confirmar, revisa tu procedimiento una vez.', 'Si dudas, marca una confianza más baja: también es información útil.'],
   },
 ] as const
+
+const TODOS = 'todos'
 
 function Distribucion({ datos }: { datos: ErroresDelEstudiante }) {
   const clasificados = datos.totalIncorrectos - datos.sinClasificar
@@ -114,10 +118,10 @@ export function ErroresPage() {
     <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div>
         <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-widest text-ocre-700 uppercase"><Compass className="size-4" aria-hidden="true" /> Tu progreso</p>
-        <h1 className="text-3xl font-bold text-marino-800 sm:text-[36px] sm:leading-tight">Mis errores</h1>
-        <p className="mt-2 text-texto-suave">Entiende por qué fallaste y qué hacer en el próximo ejercicio.</p>
+        <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Mis errores</h1>
+        <p className="mt-1.5 text-base text-texto-suave">Entiende por qué fallaste y qué hacer en el próximo ejercicio.</p>
       </div>
-      <Link to="/historial" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-marino-800 underline-offset-4 hover:underline"><History className="size-4" aria-hidden="true" /> Ver mi historial <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
+      <Link to="/historial" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-texto-suave underline-offset-4 transition-colors hover:text-marino-800 hover:underline"><History className="size-4" aria-hidden="true" /> Ver mi historial <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
     </div>
 
     <section data-sobre-marino className="relative isolate overflow-hidden rounded-panel bg-marino-800 p-6 text-white sm:p-9 lg:px-10 lg:py-9">
@@ -139,13 +143,19 @@ export function ErroresPage() {
     <section aria-labelledby="patrones-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div><h2 id="patrones-titulo" className="text-xl font-bold text-marino-800 sm:text-2xl">Tipos de error</h2><p className="mt-1 text-sm text-texto-suave">Filtra por componente para ver dónde se concentran.</p></div>
-        <label className="relative block w-full sm:w-60">
-          <span className="mb-1.5 block text-xs font-bold text-texto-suave">Componente</span>
-          <select value={componente} onChange={e => setComponente(e.target.value)} className="h-12 w-full appearance-none rounded-control border-2 border-borde-fuerte bg-superficie pr-10 pl-4 text-sm font-bold text-marino-800 transition-colors hover:border-marino-200">
-            <option value="">Todos los componentes</option>
-            {datos?.componentesConIntentos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select><ChevronDown className="pointer-events-none absolute right-3.5 bottom-4 size-4 text-texto-suave" aria-hidden="true" />
-        </label>
+        <Campo etiqueta="Componente" className="w-full sm:w-60">
+          {p => (
+            <Select value={componente || TODOS} onValueChange={v => setComponente(v === TODOS ? '' : v)}>
+              <SelectTrigger {...p} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS}>Todos los componentes</SelectItem>
+                {datos?.componentesConIntentos.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nombre}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+        </Campo>
       </div>
 
       <div aria-busy={cargando}>
@@ -178,7 +188,7 @@ export function ErroresPage() {
                   <div className="p-5 xl:p-6">
                     <div className="flex items-center justify-between gap-2">
                       <span className={cn('grid size-11 place-items-center rounded-control', t.fondo, t.texto)}><Icono className="size-6" aria-hidden="true" /></span>
-                      {principal ? <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', t.fondo, t.texto)}>El más frecuente</span> : <span className="text-xs text-texto-suave">{d?.cantidad ?? 0} {(d?.cantidad ?? 0) === 1 ? 'respuesta' : 'respuestas'}</span>}
+                      {principal ? <span className={cn('rounded-full px-3 py-1.5 text-xs font-bold', t.fondo, t.texto)}>El más frecuente</span> : <span className="text-xs text-texto-suave">{d?.cantidad ?? 0} {(d?.cantidad ?? 0) === 1 ? 'respuesta' : 'respuestas'}</span>}
                     </div>
                     <div className="mt-5 flex items-end gap-2"><span className={cn('font-titular text-[34px] leading-none font-bold tabular-nums', t.texto)}>{pct(d?.porcentaje ?? 0)}</span><span className="pb-0.5 text-xs text-texto-suave">de tus errores clasificados</span></div>
                     <h3 className="mt-4 text-lg font-bold text-marino-800">{t.nombre}</h3>
@@ -195,7 +205,7 @@ export function ErroresPage() {
                 </article>
               })}
             </div>
-            {datos.sinClasificar > 0 && <p className="flex items-start gap-2 rounded-control bg-hueso px-4 py-3 text-xs leading-relaxed text-texto-suave"><History className="mt-0.5 size-4 shrink-0" aria-hidden="true" />{datos.sinClasificar === 1 ? '1 respuesta incorrecta es de antes de que la plataforma clasificara los errores, por eso no entra en los porcentajes.' : `${datos.sinClasificar} respuestas incorrectas son de antes de que la plataforma clasificara los errores, por eso no entran en los porcentajes.`} Puedes verlas en tu historial.</p>}
+            {datos.sinClasificar > 0 && <Aviso tono="informacion">{datos.sinClasificar === 1 ? '1 respuesta incorrecta es de antes de que la plataforma clasificara los errores, por eso no entra en los porcentajes.' : `${datos.sinClasificar} respuestas incorrectas son de antes de que la plataforma clasificara los errores, por eso no entran en los porcentajes.`} Puedes verlas en tu <Link to="/historial">historial</Link>.</Aviso>}
           </div>}
         </>}
       </div>
@@ -206,7 +216,7 @@ export function ErroresPage() {
       <Button asChild variant="contorno" className="w-full sm:w-auto"><Link to={practica}>Ir al banco <ArrowRight aria-hidden="true" /></Link></Button>
     </section>
     <details className="group text-sm text-texto-suave">
-      <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-marino-700"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-marino-700 [&::-webkit-details-marker]:hidden"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
       <p className="mt-3 max-w-3xl leading-relaxed">Solo se clasifican las respuestas incorrectas. Si marcaste confianza 4 o 5, cuenta como error de ansiedad. Si venías acertando el 70 % o más de tus últimos intentos en ese componente o competencia, cuenta como error de hábito. En los demás casos cuenta como error cognitivo. Cuando un tipo pasa de la mitad de tus errores, lo destacamos arriba con una recomendación.</p>
     </details>
   </div>

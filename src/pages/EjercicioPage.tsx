@@ -7,42 +7,18 @@ import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, Siguiente
 import { Aviso } from '@/components/Aviso'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
+import { cajaDeOpcion, ContenidoDeOpcion, estiloOpcion, type EstadoOpcion } from '@/components/Opciones'
 import { SelectorDeConfianza } from '@/components/SelectorDeConfianza'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fechaHora } from '@/utils/formato'
 import { uuid } from '@/utils/uuid'
 
-interface EstiloOpcion { caja: string; ficha: string; texto: string }
-
-function estiloOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null): EstiloOpcion {
-  if (!resultado) {
-    return seleccion === o.id
-      ? {
-          caja: 'border-violeta-600 bg-violeta-50',
-          ficha: 'bg-violeta-600 text-white',
-          texto: 'text-violeta-700',
-        }
-      : {
-          caja: 'border-borde-fuerte bg-superficie hover:border-marino-200 active:translate-y-[3px] active:border-b-2',
-          ficha: 'bg-hueso text-texto-suave',
-          texto: 'text-marino-800',
-        }
-  }
-  if (o.id === resultado.idOpcionCorrecta) {
-    return { caja: 'border-exito-600 bg-exito-50', ficha: 'bg-exito-600 text-white', texto: 'text-exito-700' }
-  }
-  if (o.id === resultado.idOpcionSeleccionada) {
-    return { caja: 'border-error-600 bg-error-50', ficha: 'bg-error-600 text-white', texto: 'text-error-700' }
-  }
-  return { caja: 'border-borde-fuerte bg-superficie opacity-55', ficha: 'bg-hueso text-texto-suave', texto: 'text-marino-800' }
-}
-
-function etiquetaOpcion(o: OpcionEstudiante, resultado: ResultadoIntento | null) {
-  if (!resultado) return null
-  if (o.id === resultado.idOpcionCorrecta) return { texto: 'Respuesta correcta', color: 'text-exito-700' }
-  if (o.id === resultado.idOpcionSeleccionada) return { texto: 'Tu respuesta', color: 'text-error-700' }
-  return null
+function estadoOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null): EstadoOpcion {
+  if (!resultado) return seleccion === o.id ? 'seleccionada' : 'libre'
+  if (o.id === resultado.idOpcionCorrecta) return 'correcta'
+  if (o.id === resultado.idOpcionSeleccionada) return 'incorrecta'
+  return 'descartada'
 }
 
 function Esqueleto() {
@@ -254,8 +230,7 @@ export function EjercicioPage() {
 
             <div role="radiogroup" aria-label="Opciones de respuesta" className="mt-7 grid gap-3.5 sm:grid-cols-2">
               {ejercicio.opciones.map((o, i) => {
-                const est = estiloOpcion(o, seleccion, resultado)
-                const etiqueta = etiquetaOpcion(o, resultado)
+                const estado = estadoOpcion(o, seleccion, resultado)
                 return (
                   <button
                     key={o.id}
@@ -267,37 +242,9 @@ export function EjercicioPage() {
                     disabled={respondido || enviando}
                     onClick={() => setSeleccion(o.id)}
                     onKeyDown={e => teclasOpciones(e, i)}
-                    className={cn(
-                      'flex items-center gap-4 rounded-tarjeta border-2 border-b-[5px] px-5 py-5 text-left transition-[transform,border-color,background-color,opacity] disabled:cursor-default',
-                      est.caja,
-                    )}
+                    className={cn(cajaDeOpcion, 'disabled:cursor-default', estiloOpcion(estado).caja)}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={cn('grid size-[34px] shrink-0 place-items-center rounded-ficha font-titular text-sm font-bold', est.ficha)}
-                    >
-                      {o.letra}
-                    </span>
-                    <span className={cn('min-w-0 flex-1 text-lg font-semibold', est.texto)}>
-                      {o.descripcion}
-                      {o.imagen && (
-                        <img
-                          src={urlDeArchivo(o.imagen)}
-                          alt={`Opción ${o.letra}`}
-                          className="mt-2.5 max-h-[220px] w-full rounded-ficha border border-borde object-contain"
-                        />
-                      )}
-                    </span>
-                    {etiqueta && (
-                      <span
-                        className={cn(
-                          'max-w-[84px] shrink-0 text-right text-[11px] leading-[1.25] font-bold tracking-[0.06em] uppercase sm:max-w-none',
-                          etiqueta.color,
-                        )}
-                      >
-                        {etiqueta.texto}
-                      </span>
-                    )}
+                    <ContenidoDeOpcion opcion={o} estado={estado} />
                   </button>
                 )
               })}
