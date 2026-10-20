@@ -44,7 +44,11 @@ export function HistorialPage() {
   const refDetalle = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    if (!detalle || window.matchMedia('(min-width: 1024px)').matches) return
+    if (!detalle) return
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      refDetalle.current?.scrollTo({ top: 0 })
+      return
+    }
     refDetalle.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     refDetalle.current?.focus({ preventScroll: true })
   }, [detalle])
@@ -197,7 +201,7 @@ export function HistorialPage() {
           )}
         </section>
 
-        <section ref={refDetalle} tabIndex={-1} className="panel min-w-0 scroll-mt-24 space-y-5 p-6 outline-none sm:p-7 lg:sticky lg:top-24">
+        <section ref={refDetalle} tabIndex={-1} className="panel min-w-0 scroll-mt-24 space-y-5 p-6 outline-none sm:p-7 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
           <h2 className="text-xl font-bold text-marino-800">Detalle del intento</h2>
 
           {!id && <p className="text-sm text-texto-suave">Selecciona un intento de la lista para ver su detalle.</p>}
@@ -210,6 +214,12 @@ export function HistorialPage() {
                 Ejercicio #{detalle.numeroEjercicio} · {fechaHora(detalle.fechaHora)} · {detalle.componente} ·{' '}
                 {detalle.competencia} · {detalle.nivel}
               </p>
+
+              {detalle.estadoEjercicio === 'Activo' && (
+                <Button asChild variant="contorno" size="sm">
+                  <Link to={`/ejercicios/${detalle.idEjercicio}`}>Volver a intentar este ejercicio</Link>
+                </Button>
+              )}
 
               {detalle.estadoEjercicio === 'Desactivado' && (
                 <Aviso tono="informacion">
@@ -271,11 +281,6 @@ export function HistorialPage() {
 
               <p className="text-xs text-texto-suave">El detalle muestra los datos tal como se registraron en su momento.</p>
 
-              {detalle.estadoEjercicio === 'Activo' && (
-                <Button asChild variant="contorno" size="sm">
-                  <Link to={`/ejercicios/${detalle.idEjercicio}`}>Volver a intentar este ejercicio</Link>
-                </Button>
-              )}
             </div>
           )}
         </section>
