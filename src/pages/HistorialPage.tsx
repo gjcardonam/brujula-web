@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { cn } from 'cn'
@@ -41,6 +41,13 @@ export function HistorialPage() {
   const [detalle, setDetalle] = useState<IntentoDetalle | null>(null)
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const refDetalle = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!detalle || window.matchMedia('(min-width: 1024px)').matches) return
+    refDetalle.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    refDetalle.current?.focus({ preventScroll: true })
+  }, [detalle])
 
   useEffect(() => {
     let vivo = true
@@ -77,7 +84,7 @@ export function HistorialPage() {
       {error && <Aviso>{error}</Aviso>}
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <section className="panel space-y-5 p-6 sm:p-7">
+        <section className="panel min-w-0 space-y-5 p-6 sm:p-7">
           <h2 className="text-xl font-bold text-marino-800">Intentos registrados</h2>
 
           <div aria-busy={cargandoLista} aria-live="polite">
@@ -97,15 +104,47 @@ export function HistorialPage() {
             )}
 
             {!cargandoLista && datos && datos.contenido.length > 0 && (
-              <div className="overflow-x-auto">
+              <>
+              <ul className="divide-y divide-borde border-y border-borde sm:hidden">
+                {datos.contenido.map(i => {
+                  const seleccionado = String(i.id) === id
+                  const desactivado = i.estadoEjercicio === 'Desactivado'
+                  return (
+                    <li key={i.id}>
+                      <Link
+                        to={`/historial/${i.id}?pagina=${pagina}`}
+                        aria-current={seleccionado ? 'true' : undefined}
+                        className={cn(
+                          'block px-1 py-3 transition-colors hover:bg-hueso',
+                          desactivado && 'bg-hueso',
+                          seleccionado && 'bg-marino-50',
+                        )}
+                      >
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span className="font-bold text-marino-800">Ejercicio #{i.numeroEjercicio}</span>
+                          <span className={cn('text-sm font-bold', desactivado ? 'text-texto-suave' : i.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
+                            {i.esCorrecto ? 'Correcto' : 'Incorrecto'}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-sm text-texto-suave">
+                          {i.componente} · {i.competencia} · {i.nivel}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-texto-suave">{fechaHora(i.fechaHora)}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+              <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b-2 border-borde-fuerte text-xs font-bold tracking-wide text-texto-suave uppercase">
-                      <th scope="col" className="py-2.5">Ejercicio</th>
-                      <th scope="col" className="py-2.5">Componente</th>
-                      <th scope="col" className="py-2.5">Nivel</th>
-                      <th scope="col" className="py-2.5">Resultado</th>
-                      <th scope="col" className="py-2.5">Fecha y hora</th>
+                      <th scope="col" className="py-2.5 pr-3">Ejercicio</th>
+                      <th scope="col" className="py-2.5 pr-3">Componente</th>
+                      <th scope="col" className="py-2.5 pr-3">Competencia</th>
+                      <th scope="col" className="py-2.5 pr-3">Nivel</th>
+                      <th scope="col" className="py-2.5 pr-3">Resultado</th>
+                      <th scope="col" className="py-2.5 pr-3">Fecha y hora</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -122,8 +161,9 @@ export function HistorialPage() {
                             seleccionado && 'bg-marino-50',
                           )}
                         >
-                          <td className="py-3 font-bold text-marino-800">#{i.numeroEjercicio}</td>
+                          <td className="py-3 pr-3 font-bold text-marino-800">#{i.numeroEjercicio}</td>
                           <td className="py-3 pr-3 text-texto-suave">{i.componente}</td>
+                          <td className="py-3 pr-3 text-texto-suave">{i.competencia}</td>
                           <td className="py-3 pr-3 text-texto-suave">{i.nivel}</td>
                           <td className="py-3 pr-3">
                             <span className={cn('font-bold', desactivado ? 'text-texto-suave' : i.esCorrecto ? 'text-exito-700' : 'text-error-700')}>
@@ -137,6 +177,7 @@ export function HistorialPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
 
@@ -156,7 +197,7 @@ export function HistorialPage() {
           )}
         </section>
 
-        <section className="panel space-y-5 p-6 sm:p-7 lg:sticky lg:top-24">
+        <section ref={refDetalle} tabIndex={-1} className="panel min-w-0 scroll-mt-24 space-y-5 p-6 outline-none sm:p-7 lg:sticky lg:top-24">
           <h2 className="text-xl font-bold text-marino-800">Detalle del intento</h2>
 
           {!id && <p className="text-sm text-texto-suave">Selecciona un intento de la lista para ver su detalle.</p>}

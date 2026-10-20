@@ -15,7 +15,7 @@ export function fecha(iso: string | null | undefined): string {
 
 export function pct(valor: number | null | undefined): string {
   if (valor === null || valor === undefined || Number.isNaN(valor)) return '—'
-  return `${Number(valor).toFixed(0)}%`
+  return `${Number(valor).toLocaleString('es-CO', { maximumFractionDigits: 1 })}%`
 }
 
 export function nombreDeError(tipo: string | null | undefined): string {
