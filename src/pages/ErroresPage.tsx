@@ -14,28 +14,28 @@ import { pct } from '@/utils/formato'
 
 const TIPOS = [
   {
-    tipo: 'Error cognitivo', nombre: 'Te falta el concepto', etiqueta: 'Cognitivo', icono: Brain,
+    tipo: 'Error cognitivo', nombre: 'Ideas por aclarar', etiqueta: 'Cognitivo', icono: Brain,
     color: 'var(--color-violeta-600)', fondo: 'bg-violeta-50', borde: 'border-violeta-200', texto: 'text-violeta-700',
-    descripcion: 'No venías acertando en ese tema y no estabas seguro de tu respuesta. Lo más probable es que haga falta repasar la teoría.',
+    descripcion: 'No venías acertando en ese tema. Lo más probable es que haga falta repasar la teoría.',
     pista: 'Repasa el concepto antes de seguir practicando.',
-    consejo: 'La mayoría de tus errores vienen de temas que todavía no dominas. Lee la explicación de los ejercicios que fallaste y luego resuelve uno parecido sin mirar la respuesta.',
+    consejo: 'Estos errores salen de temas que todavía estás armando. Lee la explicación de los que fallaste y resuelve uno parecido sin mirar la respuesta.',
     pasos: ['Abre el ejercicio en tu historial y lee por qué tu opción no era la correcta.', 'Repasa el tema: la definición, la fórmula o el procedimiento.', 'Resuelve otro ejercicio del mismo componente.'],
   },
   {
-    tipo: 'Error de hábito', nombre: 'Un descuido', etiqueta: 'Hábito', icono: Eye,
+    tipo: 'Error de hábito', nombre: 'Lo sabes, pero se te escapan detalles', etiqueta: 'Hábito', icono: Eye,
     color: 'var(--color-teal-600)', fondo: 'bg-teal-50', borde: 'border-teal-200', texto: 'text-teal-700',
     descripcion: 'Fallaste en un tema en el que venías acertando. Suele ser un signo, una unidad o una pregunta leída muy rápido.',
     pista: 'Lee el enunciado con calma antes de responder.',
-    consejo: 'Sabes resolver estos ejercicios, pero se te están escapando detalles. Antes de marcar, vuelve a leer qué te preguntan y revisa tus operaciones.',
+    consejo: 'Antes de marcar, vuelve a leer qué te piden y revisa signos, unidades y porcentajes.',
     pasos: ['Identifica qué te piden calcular antes de empezar.', 'Revisa signos, unidades, decimales y porcentajes.', 'Antes de confirmar, mira si el resultado tiene sentido.'],
   },
   {
-    tipo: 'Error de ansiedad', nombre: 'Seguro, pero incorrecto', etiqueta: 'Ansiedad', icono: Wind,
+    tipo: 'Error de ansiedad', nombre: 'Con confianza, pero no salió', etiqueta: 'Ansiedad', icono: Wind,
     color: 'var(--color-ocre-600)', fondo: 'bg-ocre-50', borde: 'border-ocre-200', texto: 'text-ocre-700',
-    descripcion: 'Marcaste que estabas seguro y la respuesta no era la correcta. Pasa mucho cuando se responde rápido o con presión.',
-    pista: 'Practica con tiempo medido, como en la prueba.',
-    consejo: 'Muchas de tus respuestas incorrectas las marcaste con confianza alta. Practica con un tiempo límite para acostumbrarte a la presión y revisa tu procedimiento antes de confirmar.',
-    pasos: ['Ponte un tiempo por ejercicio, como en el Saber 11.', 'Antes de confirmar, revisa tu procedimiento una vez.', 'Si dudas, marca una confianza más baja: también es información útil.'],
+    descripcion: 'Marcaste confianza alta y la respuesta era otra. Pasa mucho cuando se responde rápido.',
+    pista: 'Revisa tu procedimiento antes de confirmar.',
+    consejo: 'Antes de confirmar, revisa tu procedimiento una vez. Si dudas, márcalo: tu confianza real nos ayuda a mostrarte qué repasar.',
+    pasos: ['Antes de confirmar, revisa tu procedimiento una vez.', 'Si dudas, marca una confianza más baja: también es información útil.'],
   },
 ] as const
 
@@ -217,7 +217,7 @@ export function ErroresPage() {
     </section>
     <details className="group text-sm text-texto-suave">
       <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-marino-700 [&::-webkit-details-marker]:hidden"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
-      <p className="mt-3 max-w-3xl leading-relaxed">Solo se clasifican las respuestas incorrectas. Si marcaste confianza 4 o 5, cuenta como error de ansiedad. Si venías acertando el 70 % o más de tus últimos intentos en ese componente o competencia, cuenta como error de hábito. En los demás casos cuenta como error cognitivo. Cuando un tipo pasa de la mitad de tus errores, lo destacamos arriba con una recomendación.</p>
+      <p className="mt-3 max-w-3xl leading-relaxed">Solo se clasifican las respuestas incorrectas. Si marcaste confianza 4 o 5, cuenta como error de ansiedad. Si venías acertando el 70 % o más de tus últimos ejercicios en ese componente o competencia, cuenta como error de hábito; de cada ejercicio solo cuenta el primer intento. En los demás casos cuenta como error cognitivo. Cuando un tipo pasa de la mitad de tus errores, lo destacamos arriba con una recomendación.</p>
     </details>
   </div>
 }

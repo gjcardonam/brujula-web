@@ -4,15 +4,18 @@ import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from 'cn'
 import { api, ApiError, mensajeDe, urlDeArchivo } from '@/api/client'
 import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
+import { useAuth } from '@/auth/AuthContext'
 import { Aviso } from '@/components/Aviso'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
 import { cajaDeOpcion, ContenidoDeOpcion, estiloOpcion, type EstadoOpcion } from '@/components/Opciones'
 import { SelectorDeConfianza } from '@/components/SelectorDeConfianza'
+import { TarjetaDeError } from '@/components/TarjetaDeError'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fechaHora } from '@/utils/formato'
 import { uuid } from '@/utils/uuid'
+import { alResponder, momentoDeInicio, type Retroalimentacion } from '@/retro/memoria'
 
 function estadoOpcion(o: OpcionEstudiante, seleccion: number | null, resultado: ResultadoIntento | null): EstadoOpcion {
   if (!resultado) return seleccion === o.id ? 'seleccionada' : 'libre'
@@ -47,8 +50,12 @@ export function EjercicioPage() {
   const [params] = useSearchParams()
   const componente = params.get('componente') ? Number(params.get('componente')) : null
   const navigate = useNavigate()
+  const idUsuario = useAuth().usuario?.id ?? null
   const refOpciones = useRef<(HTMLButtonElement | null)[]>([])
   const refResultado = useRef<HTMLDivElement>(null)
+  const refEnunciado = useRef<HTMLHeadingElement>(null)
+  // Cronómetro oculto: solo cuenta el tiempo con la pestaña visible.
+  const cronometro = useRef({ acumulado: 0, desde: 0 })
 
   const [ejercicio, setEjercicio] = useState<EjercicioEstudiante | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -61,20 +68,47 @@ export function EjercicioPage() {
   const [sinMas, setSinMas] = useState<string | null>(null)
   const [token, setToken] = useState(() => uuid())
   const [altoFranja, setAltoFranja] = useState(0)
+  const [inicio, setInicio] = useState<string | null>(null)
+  const [retro, setRetro] = useState<Retroalimentacion | null>(null)
 
   const cargar = useCallback(() => {
     setEjercicio(null); setError(null); setNoDisponible(false)
-    setSeleccion(null); setConfianza(null); setResultado(null); setSinMas(null)
+    setSeleccion(null); setConfianza(null); setResultado(null); setSinMas(null); setRetro(null); setInicio(null)
     setToken(uuid())
     api<EjercicioEstudiante>(`/ejercicios/${id}`)
-      .then(setEjercicio)
+      .then(e => {
+        setEjercicio(e)
+        cronometro.current = { acumulado: 0, desde: document.hidden ? 0 : performance.now() }
+        const momento = idUsuario === null ? null : momentoDeInicio(idUsuario, e.componente.nombre)
+        if (momento) setInicio(momento)
+      })
       .catch(e => {
         if (e instanceof ApiError && e.estado === 410) setNoDisponible(true)
         else setError(mensajeDe(e))
       })
-  }, [id])
+  }, [id, idUsuario])
 
   useEffect(cargar, [cargar])
+
+  useEffect(() => {
+    function alCambiarVisibilidad() {
+      const c = cronometro.current
+      if (document.hidden) {
+        if (c.desde) c.acumulado += performance.now() - c.desde
+        c.desde = 0
+      } else {
+        c.desde = performance.now()
+      }
+    }
+    document.addEventListener('visibilitychange', alCambiarVisibilidad)
+    return () => document.removeEventListener('visibilitychange', alCambiarVisibilidad)
+  }, [])
+
+  function tiempoDeRespuestaMs() {
+    const c = cronometro.current
+    const total = Math.round(c.acumulado + (c.desde ? performance.now() - c.desde : 0))
+    return total > 0 ? total : null
+  }
 
   useEffect(() => {
     if (!resultado) return
@@ -99,9 +133,18 @@ export function EjercicioPage() {
     try {
       const r = await api<ResultadoIntento>('/intentos', {
         method: 'POST',
-        body: { idEjercicio: ejercicio.id, idOpcion: seleccion, nivelConfianza: confianza, tokenIdempotencia: token },
+        body: {
+          idEjercicio: ejercicio.id, idOpcion: seleccion, nivelConfianza: confianza, tokenIdempotencia: token,
+          tiempoRespuestaMs: tiempoDeRespuestaMs(),
+        },
       })
       setResultado(r)
+      setInicio(null)
+      if (idUsuario !== null && !r.repetido) {
+        setRetro(alResponder(idUsuario, {
+          correcto: r.esCorrecto, tipoError: r.tipoError, componente: ejercicio.componente.nombre, confianza: r.nivelConfianza,
+        }))
+      }
     } catch (e) {
       if (e instanceof ApiError && e.estado === 410) setNoDisponible(true)
       else setError(mensajeDe(e))
@@ -110,18 +153,23 @@ export function EjercicioPage() {
     }
   }
 
-  async function siguiente() {
+  async function siguiente(filtro = componente) {
     if (!ejercicio) return
     setBuscandoSiguiente(true); setError(null)
     try {
-      const r = await api<SiguienteEjercicio>(`/ejercicios/${ejercicio.id}/siguiente${componente ? `?componente=${componente}` : ''}`)
-      if (r.hayMas && r.idEjercicio) navigate(`/ejercicios/${r.idEjercicio}${componente ? `?componente=${componente}` : ''}`)
+      const r = await api<SiguienteEjercicio>(`/ejercicios/${ejercicio.id}/siguiente${filtro ? `?componente=${filtro}` : ''}`)
+      if (r.hayMas && r.idEjercicio) navigate(`/ejercicios/${r.idEjercicio}${filtro ? `?componente=${filtro}` : ''}`)
       else setSinMas(r.mensaje ?? 'Ya resolviste todos los ejercicios disponibles con este filtro.')
     } catch (e) {
       setError(mensajeDe(e))
     } finally {
       setBuscandoSiguiente(false)
     }
+  }
+
+  function verEnunciado() {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    refEnunciado.current?.focus({ preventScroll: true })
   }
 
   function teclasOpciones(e: React.KeyboardEvent, i: number) {
@@ -204,6 +252,8 @@ export function EjercicioPage() {
           </div>
         ) : (
           <div className="my-auto w-full max-w-[820px] animate-entrar">
+            {inicio && <Aviso tono="informacion" className="mb-5">{inicio}</Aviso>}
+
             {ejercicio.intentosPrevios > 0 && (
               <p className="mb-3 text-xs font-bold tracking-[0.08em] text-texto-suave uppercase">
                 Ya lo resolviste {ejercicio.intentosPrevios} {ejercicio.intentosPrevios === 1 ? 'vez' : 'veces'}
@@ -211,10 +261,12 @@ export function EjercicioPage() {
             )}
 
             <h1
+              ref={refEnunciado}
+              tabIndex={-1}
               className={
                 ejercicio.enunciado.length > 180
-                  ? 'font-sans text-[17px] leading-[1.65] font-medium tracking-normal whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[19px]'
-                  : 'text-2xl leading-[1.35] font-semibold whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[29px]'
+                  ? 'outline-none font-sans text-[17px] leading-[1.65] font-medium tracking-normal whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[19px]'
+                  : 'outline-none text-2xl leading-[1.35] font-semibold whitespace-pre-line text-marino-800 [text-wrap:pretty] sm:text-[29px]'
               }
             >
               {ejercicio.enunciado}
@@ -304,7 +356,6 @@ export function EjercicioPage() {
                 {resultado.retroalimentacionDisponible
                   ? resultado.retroalimentacion
                   : 'Todavía no hay una explicación escrita para la opción que elegiste.'}
-                {!resultado.esCorrecto && resultado.tipoError && <span className="block font-bold">Tipo de error: {resultado.tipoError}</span>}
                 {!resultado.esCorrecto && opcionCorrecta && (
                   <>
                     {' '}La respuesta correcta es{' '}
@@ -314,6 +365,26 @@ export function EjercicioPage() {
                     </strong>.
                   </>
                 )}
+                {resultado.esCorrecto && retro?.mensaje && <span className="mt-2 block font-bold">{retro.mensaje}</span>}
+                {!resultado.esCorrecto && retro?.tipo && retro.mensaje && (
+                  <TarjetaDeError
+                    tipo={retro.tipo}
+                    mensaje={retro.mensaje}
+                    accion={
+                      retro.tipo === 'Error cognitivo' ? (
+                        <Button type="button" variant="contorno" size="sm" disabled={buscandoSiguiente || !!sinMas}
+                          onClick={() => siguiente(ejercicio?.componente.id ?? null)}>
+                          Probar otro de {ejercicio?.componente.nombre}
+                        </Button>
+                      ) : retro.tipo === 'Error de hábito' ? (
+                        <Button type="button" variant="contorno" size="sm" onClick={verEnunciado}>
+                          Ver el enunciado otra vez
+                        </Button>
+                      ) : undefined
+                    }
+                  />
+                )}
+                {retro?.pausa && <span className="mt-2 block text-sm">{retro.pausa}</span>}
               </>
             }
             nota={
@@ -326,7 +397,7 @@ export function EjercicioPage() {
                   <Link to={volver}>Volver a la ruta</Link>
                 </Button>
               ) : (
-                <Button type="button" size="lg" onClick={siguiente} disabled={buscandoSiguiente} className="max-sm:w-full">
+                <Button type="button" size="lg" onClick={() => siguiente()} disabled={buscandoSiguiente} className="max-sm:w-full">
                   {buscandoSiguiente && <Loader2 className="animate-spin" aria-hidden="true" />}
                   Siguiente
                   {!buscandoSiguiente && <ArrowRight aria-hidden="true" strokeWidth={2.5} />}
