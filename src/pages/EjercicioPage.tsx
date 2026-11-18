@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Clock, History, Loader2, RotateCcw } from 'lucide-react'
 import { cn } from 'cn'
 import { api, ApiError, mensajeDe, urlDeArchivo } from '@/api/client'
 import type { EjercicioEstudiante, OpcionEstudiante, ResultadoIntento, SiguienteEjercicio } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { Aviso } from '@/components/Aviso'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
-import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
 import { cajaDeOpcion, ContenidoDeOpcion, estiloOpcion, type EstadoOpcion } from '@/components/Opciones'
 import { SelectorDeConfianza } from '@/components/SelectorDeConfianza'
-import { TarjetaDeError } from '@/components/TarjetaDeError'
+import { BarraDeContinuar, Revision } from '@/components/Revision'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fechaHora } from '@/utils/formato'
+import { cuandoSeHabilita, fechaHora } from '@/utils/formato'
 import { uuid } from '@/utils/uuid'
 import { alResponder, momentoDeInicio, type Retroalimentacion } from '@/retro/memoria'
 
@@ -67,17 +66,21 @@ export function EjercicioPage() {
   const [buscandoSiguiente, setBuscandoSiguiente] = useState(false)
   const [sinMas, setSinMas] = useState<string | null>(null)
   const [token, setToken] = useState(() => uuid())
-  const [altoFranja, setAltoFranja] = useState(0)
   const [inicio, setInicio] = useState<string | null>(null)
   const [retro, setRetro] = useState<Retroalimentacion | null>(null)
+  const [bloqueo, setBloqueo] = useState<{ disponibleDesde: string | null } | null>(null)
+  const [mostrarEnunciado, setMostrarEnunciado] = useState(0)
 
   const cargar = useCallback(() => {
     setEjercicio(null); setError(null); setNoDisponible(false)
     setSeleccion(null); setConfianza(null); setResultado(null); setSinMas(null); setRetro(null); setInicio(null)
+    setBloqueo(null)
     setToken(uuid())
     api<EjercicioEstudiante>(`/ejercicios/${id}`)
       .then(e => {
         setEjercicio(e)
+        if (e.intentosRestantes === 0) setBloqueo({ disponibleDesde: null })
+        else if (e.disponibleDesde && new Date(e.disponibleDesde) > new Date()) setBloqueo({ disponibleDesde: e.disponibleDesde })
         cronometro.current = { acumulado: 0, desde: document.hidden ? 0 : performance.now() }
         const momento = idUsuario === null ? null : momentoDeInicio(idUsuario, e.componente.nombre)
         if (momento) setInicio(momento)
@@ -115,16 +118,6 @@ export function EjercicioPage() {
     refResultado.current?.focus({ preventScroll: true })
   }, [resultado])
 
-  useEffect(() => {
-    const el = refResultado.current
-    if (!el || !resultado) { setAltoFranja(0); return }
-    const medir = () => setAltoFranja(el.offsetHeight)
-    medir()
-    const observador = new ResizeObserver(medir)
-    observador.observe(el)
-    return () => observador.disconnect()
-  }, [resultado])
-
   const volver = `/banco${componente ? `?componente=${componente}` : ''}`
 
   async function confirmar() {
@@ -145,9 +138,13 @@ export function EjercicioPage() {
           correcto: r.esCorrecto, tipoError: r.tipoError, componente: ejercicio.componente.nombre, confianza: r.nivelConfianza,
         }))
       }
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e) {
       if (e instanceof ApiError && e.estado === 410) setNoDisponible(true)
-      else setError(mensajeDe(e))
+      else if (e instanceof ApiError && e.codigo === 'SIN_INTENTOS') setBloqueo({ disponibleDesde: null })
+      else if (e instanceof ApiError && e.codigo === 'REINTENTO_EN_ESPERA') {
+        setBloqueo({ disponibleDesde: String(e.extra.disponibleDesde ?? '') || null })
+      } else setError(mensajeDe(e))
     } finally {
       setEnviando(false)
     }
@@ -168,8 +165,7 @@ export function EjercicioPage() {
   }
 
   function verEnunciado() {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    refEnunciado.current?.focus({ preventScroll: true })
+    setMostrarEnunciado(n => n + 1)
   }
 
   function teclasOpciones(e: React.KeyboardEvent, i: number) {
@@ -216,13 +212,41 @@ export function EjercicioPage() {
 
   const respondido = resultado !== null
   const tono = tonoDeComponente(ejercicio?.componente.nombre)
-  const opcionCorrecta = resultado && ejercicio
-    ? ejercicio.opciones.find(o => o.id === resultado.idOpcionCorrecta) ?? null
-    : null
   const indiceFoco = ejercicio && seleccion ? ejercicio.opciones.findIndex(o => o.id === seleccion) : 0
+  const restantesAntes = ejercicio?.intentosRestantes ?? null
+  const restantesDespues = restantesAntes === null ? null : Math.max(0, restantesAntes - 1)
+
+  const accionDelMensaje = !resultado || resultado.esCorrecto || !retro?.tipo ? undefined
+    : retro.tipo === 'Error cognitivo' ? (
+      <Button type="button" variant="contorno" size="sm" disabled={buscandoSiguiente || !!sinMas}
+        onClick={() => siguiente(ejercicio?.componente.id ?? null)}>
+        Probar otro de {ejercicio?.componente.nombre}
+      </Button>
+    ) : retro.tipo === 'Error de hábito' ? (
+      <Button type="button" variant="contorno" size="sm" onClick={verEnunciado}>
+        Ver el enunciado otra vez
+      </Button>
+    ) : undefined
+
+  const botonSiguiente = sinMas ? (
+    <>
+      {componente !== null && (
+        <Button type="button" variant="contorno" size="lg" onClick={() => siguiente(null)} disabled={buscandoSiguiente}>
+          Quitar el filtro
+        </Button>
+      )}
+      <Button asChild size="lg"><Link to={volver}>Volver a la ruta</Link></Button>
+    </>
+  ) : (
+    <Button type="button" size="lg" onClick={() => siguiente()} disabled={buscandoSiguiente}>
+      {buscandoSiguiente && <Loader2 className="animate-spin" aria-hidden="true" />}
+      Siguiente ejercicio
+      {!buscandoSiguiente && <ArrowRight aria-hidden="true" strokeWidth={2.5} />}
+    </Button>
+  )
 
   return (
-    <div className="flex min-h-screen flex-col bg-fondo">
+    <div className="flex min-h-screen flex-col fondo-vivo">
       <header className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-3 px-5 py-3 sm:px-10">
         <Link
           to={volver}
@@ -233,30 +257,72 @@ export function EjercicioPage() {
         </Link>
         {ejercicio && (
           <span
-            className={cn('ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold max-sm:ml-0', tono.pildora)}
+            className={cn('ml-auto inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-full px-4 py-2 text-sm font-bold max-sm:ml-0', tono.pildora)}
           >
             <IconoComponente nombre={ejercicio.componente.nombre} className="size-[15px]" />
-            {ejercicio.componente.nombre} · {ejercicio.nivel}
+            Ejercicio {ejercicio.numero} · {ejercicio.componente.nombre} · {ejercicio.competencia.nombre} · {ejercicio.nivel}
           </span>
         )}
       </header>
 
-      <main
-        className="flex flex-1 flex-col items-center px-5 pt-5 pb-12 sm:px-10"
-        style={altoFranja ? { paddingBottom: altoFranja + 32 } : undefined}
-      >
+      <main className={cn('flex flex-1 flex-col items-center px-5 pt-5 sm:px-10', respondido ? 'pb-48 sm:pb-36' : 'pb-12')}>
         {!ejercicio ? (
           <div aria-busy="true" aria-live="polite" className="my-auto w-full max-w-[820px]">
             <span className="sr-only">Cargando el ejercicio</span>
             <Esqueleto />
           </div>
+        ) : bloqueo && !respondido ? (
+          <div className="my-auto w-full max-w-[560px] animate-aparecer">
+            <div className="panel p-7 text-center sm:p-9">
+              <span aria-hidden="true" className="mx-auto grid size-16 place-items-center rounded-full bg-ambar-50 text-ambar-600">
+                {bloqueo.disponibleDesde ? <Clock className="size-8" strokeWidth={2.2} /> : <History className="size-8" strokeWidth={2.2} />}
+              </span>
+              <h1 className="mt-5 text-2xl font-bold text-marino-800">
+                {bloqueo.disponibleDesde ? 'Este ejercicio está descansando' : 'Ya usaste tus dos intentos'}
+              </h1>
+              <p className="mt-2.5 text-md leading-relaxed text-texto-suave">
+                {bloqueo.disponibleDesde
+                  ? `Volver a responderlo enseguida, con la respuesta fresca, no te dice si lo aprendiste. Podrás intentarlo de nuevo ${cuandoSeHabilita(bloqueo.disponibleDesde)}`
+                  : 'Cada ejercicio se puede practicar dos veces. Revisa tus intentos en el historial y sigue con otros ejercicios.'}
+              </p>
+              <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild variant="contorno"><Link to="/historial">Ver mi historial</Link></Button>
+                {botonSiguiente}
+              </div>
+              {sinMas && <p className="mt-4 text-sm text-texto-suave">{sinMas}</p>}
+            </div>
+          </div>
+        ) : resultado ? (
+          <div ref={refResultado} tabIndex={-1} aria-live="polite" className="w-full max-w-[820px] outline-none">
+            <Revision
+              datos={{
+                enunciado: ejercicio.enunciado,
+                imagenEnunciado: ejercicio.imagenEnunciado,
+                opciones: ejercicio.opciones,
+                idOpcionSeleccionada: resultado.idOpcionSeleccionada,
+                idOpcionCorrecta: resultado.idOpcionCorrecta,
+                esCorrecto: resultado.esCorrecto,
+                retroalimentacion: resultado.retroalimentacion,
+                retroalimentacionDisponible: resultado.retroalimentacionDisponible,
+              }}
+              mensaje={retro?.mensaje}
+              tipo={resultado.esCorrecto ? null : retro?.tipo}
+              accionDelMensaje={accionDelMensaje}
+              abrirEnunciado={mostrarEnunciado}
+              nota={`Intento ${resultado.numeroIntento} · ${fechaHora(resultado.respondidoEn)} · confianza ${resultado.nivelConfianza} de 5`}
+            />
+            {retro?.pausa && <Aviso tono="informacion" className="mt-5">{retro.pausa}</Aviso>}
+          </div>
         ) : (
           <div className="my-auto w-full max-w-[820px] animate-entrar">
             {inicio && <Aviso tono="informacion" className="mb-5">{inicio}</Aviso>}
 
-            {ejercicio.intentosPrevios > 0 && (
-              <p className="mb-3 text-xs font-bold tracking-[0.08em] text-texto-suave uppercase">
-                Ya lo resolviste {ejercicio.intentosPrevios} {ejercicio.intentosPrevios === 1 ? 'vez' : 'veces'}
+            {restantesAntes !== null && (
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-superficie px-3.5 py-1.5 text-xs font-bold text-texto-suave shadow-[0_0_0_1px_var(--color-borde)]">
+                <RotateCcw className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+                {ejercicio.intentosPrevios === 0 || restantesAntes > 1
+                  ? `${restantesAntes} intentos en este ejercicio: el segundo se habilita un día después del primero`
+                  : 'Último intento para este ejercicio'}
               </p>
             )}
 
@@ -276,7 +342,7 @@ export function EjercicioPage() {
               <img
                 src={urlDeArchivo(ejercicio.imagenEnunciado)}
                 alt="Ilustración del enunciado"
-                className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde object-contain"
+                className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde bg-superficie object-contain"
               />
             )}
 
@@ -290,8 +356,8 @@ export function EjercicioPage() {
                     ref={el => { refOpciones.current[i] = el }}
                     role="radio"
                     aria-checked={seleccion === o.id}
-                    tabIndex={respondido ? -1 : i === Math.max(0, indiceFoco) ? 0 : -1}
-                    disabled={respondido || enviando}
+                    tabIndex={i === Math.max(0, indiceFoco) ? 0 : -1}
+                    disabled={enviando}
                     onClick={() => setSeleccion(o.id)}
                     onKeyDown={e => teclasOpciones(e, i)}
                     className={cn(cajaDeOpcion, 'disabled:cursor-default', estiloOpcion(estado).caja)}
@@ -304,16 +370,14 @@ export function EjercicioPage() {
 
             <div className="tarjeta mt-6 flex flex-col gap-5 rounded-[20px] px-6 py-5 sm:flex-row sm:items-center sm:gap-[22px]">
               <div className="shrink-0">
-                <p className="font-titular text-md font-bold tracking-[-0.02em] text-marino-800">
-                  {respondido ? '¿Qué tan seguro estabas?' : '¿Qué tan seguro estás?'}
-                </p>
+                <p className="font-titular text-md font-bold tracking-[-0.02em] text-marino-800">¿Qué tan seguro estás?</p>
                 <p className="text-xs text-texto-suave">Nos dice por qué fallaste, no solo que fallaste</p>
               </div>
               <div className="flex flex-1 sm:justify-end">
                 <SelectorDeConfianza
                   valor={confianza}
                   onCambiar={setConfianza}
-                  disabled={respondido || enviando}
+                  disabled={enviando}
                   etiqueta="Nivel de confianza, de 1 a 5"
                 />
               </div>
@@ -321,92 +385,43 @@ export function EjercicioPage() {
 
             {error && <Aviso className="mt-6">{error}</Aviso>}
 
-            {!respondido && (
-              <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-texto-suave">
-                  {seleccion === null
-                    ? 'Elige una opción para continuar.'
-                    : confianza === null
-                      ? 'Marca qué tan seguro estás de tu respuesta.'
-                      : 'Al confirmar te explicamos la opción que elegiste.'}
-                </p>
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={confirmar}
-                  disabled={seleccion === null || confianza === null || enviando}
-                  className="max-sm:w-full"
-                >
-                  {enviando && <Loader2 className="animate-spin" aria-hidden="true" />}
-                  {enviando ? 'Registrando' : 'Confirmar respuesta'}
-                </Button>
-              </div>
-            )}
+            <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-texto-suave">
+                {seleccion === null
+                  ? 'Elige una opción para continuar.'
+                  : confianza === null
+                    ? 'Marca qué tan seguro estás de tu respuesta.'
+                    : 'Al confirmar te explicamos la opción que elegiste.'}
+              </p>
+              <Button
+                type="button"
+                size="lg"
+                onClick={confirmar}
+                disabled={seleccion === null || confianza === null || enviando}
+                className="max-sm:w-full"
+              >
+                {enviando && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {enviando ? 'Registrando' : 'Confirmar respuesta'}
+              </Button>
+            </div>
           </div>
         )}
       </main>
 
-      <div ref={refResultado} tabIndex={-1} aria-live="polite" className="fixed inset-x-0 bottom-0 z-30 outline-none">
-        {resultado && (
-          <FranjaDeCorreccion
-            correcto={resultado.esCorrecto}
-            titulo={resultado.esCorrecto ? 'Respuesta correcta' : 'No es la respuesta correcta'}
-            detalle={
-              <>
-                {resultado.retroalimentacionDisponible
-                  ? resultado.retroalimentacion
-                  : 'Todavía no hay una explicación escrita para la opción que elegiste.'}
-                {!resultado.esCorrecto && opcionCorrecta && (
-                  <>
-                    {' '}La respuesta correcta es{' '}
-                    <strong>
-                      {opcionCorrecta.letra}
-                      {opcionCorrecta.descripcion ? `. ${opcionCorrecta.descripcion}` : ''}
-                    </strong>.
-                  </>
-                )}
-                {resultado.esCorrecto && retro?.mensaje && <span className="mt-2 block font-bold">{retro.mensaje}</span>}
-                {!resultado.esCorrecto && retro?.tipo && retro.mensaje && (
-                  <TarjetaDeError
-                    tipo={retro.tipo}
-                    mensaje={retro.mensaje}
-                    accion={
-                      retro.tipo === 'Error cognitivo' ? (
-                        <Button type="button" variant="contorno" size="sm" disabled={buscandoSiguiente || !!sinMas}
-                          onClick={() => siguiente(ejercicio?.componente.id ?? null)}>
-                          Probar otro de {ejercicio?.componente.nombre}
-                        </Button>
-                      ) : retro.tipo === 'Error de hábito' ? (
-                        <Button type="button" variant="contorno" size="sm" onClick={verEnunciado}>
-                          Ver el enunciado otra vez
-                        </Button>
-                      ) : undefined
-                    }
-                  />
-                )}
-                {retro?.pausa && <span className="mt-2 block text-sm">{retro.pausa}</span>}
-              </>
-            }
-            nota={
-              sinMas ??
-              `Intento ${resultado.numeroIntento} · ${fechaHora(resultado.respondidoEn)} · confianza ${resultado.nivelConfianza} de 5`
-            }
-            accion={
-              sinMas ? (
-                <Button asChild size="lg" className="max-sm:w-full">
-                  <Link to={volver}>Volver a la ruta</Link>
-                </Button>
-              ) : (
-                <Button type="button" size="lg" onClick={() => siguiente()} disabled={buscandoSiguiente} className="max-sm:w-full">
-                  {buscandoSiguiente && <Loader2 className="animate-spin" aria-hidden="true" />}
-                  Siguiente
-                  {!buscandoSiguiente && <ArrowRight aria-hidden="true" strokeWidth={2.5} />}
-                </Button>
-              )
-            }
-          />
-        )}
-      </div>
+      {resultado && (
+        <BarraDeContinuar
+          correcto={resultado.esCorrecto}
+          detalle={
+            sinMas ?? (
+              restantesDespues === null ? null
+                : restantesDespues === 0 ? 'Usaste los dos intentos de este ejercicio.'
+                  : `Te queda 1 intento en este ejercicio, disponible ${cuandoSeHabilita(new Date(Date.parse(resultado.respondidoEn) + 24 * 3600 * 1000).toISOString())}`
+            )
+          }
+        >
+          {botonSiguiente}
+        </BarraDeContinuar>
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { Marca, RosaDeLosVientos } from '@/components/Marca'
 
 export function LayoutAcceso({ texto, nota, children }: { texto: ReactNode; nota?: ReactNode; children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-fondo p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen fondo-vivo p-4 sm:p-6 lg:p-8">
       <div className="mx-auto grid w-full max-w-[1240px] items-stretch gap-5 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[1.15fr_1fr] lg:gap-8">
         <section
           data-sobre-marino

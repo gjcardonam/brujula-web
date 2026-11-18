@@ -5,11 +5,11 @@ import { cn } from 'cn'
 import { useAuth } from '@/auth/AuthContext'
 import { Marca } from '@/components/Marca'
 
-function Enlace({ to, children }: { to: string; children: React.ReactNode }) {
+function Enlace({ to, end = true, children }: { to: string; end?: boolean; children: React.ReactNode }) {
   return (
     <NavLink
       to={to}
-      end
+      end={end}
       className={({ isActive }) =>
         cn(
           'relative inline-flex h-11 items-center justify-center px-0.5 text-xs min-[380px]:text-sm md:text-base font-bold whitespace-nowrap transition-colors',
@@ -42,8 +42,8 @@ export function BarraSuperior() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-fondo">
-      <header className="sticky top-0 z-40 border-b border-borde bg-superficie">
+    <div className="flex min-h-screen flex-col fondo-vivo">
+      <header className="sticky top-0 z-40 border-b border-borde bg-superficie/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-x-8 px-5 sm:px-10 md:h-[74px]">
           <Link to={inicio} className="order-1 py-4 text-marino-800">
             <Marca />
@@ -54,10 +54,11 @@ export function BarraSuperior() {
             aria-label="Secciones"
             className="order-3 w-full border-t border-borde md:order-2 md:w-auto md:border-0"
           >
-            <ul className={cn('grid items-center gap-1 md:flex md:gap-6', esAdmin ? 'grid-cols-2' : 'grid-cols-4')}>
+            <ul className={cn('grid items-center gap-1 md:flex md:gap-6', esAdmin ? 'grid-cols-2' : 'grid-cols-5')}>
               <li><Enlace to={inicio}>{esAdmin ? 'Ejercicios' : 'Practicar'}</Enlace></li>
+              {!esAdmin && <li><Enlace to="/simulacros" end={false}>Simulacros</Enlace></li>}
               {!esAdmin && <li><Enlace to="/historial">Historial</Enlace></li>}
-              {!esAdmin && <li><Enlace to="/estadisticas">Mis errores</Enlace></li>}
+              {!esAdmin && <li><Enlace to="/estadisticas">Mis estadísticas</Enlace></li>}
               <li><Enlace to="/perfil">Mi perfil</Enlace></li>
             </ul>
           </nav>
@@ -79,10 +80,10 @@ export function BarraSuperior() {
               type="button"
               onClick={salir}
               disabled={saliendo}
-              className="grid size-10 shrink-0 place-items-center rounded-full text-texto-suave transition-colors hover:bg-hueso hover:text-marino-800 disabled:opacity-50"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-sm font-bold text-texto-suave transition-colors hover:bg-hueso hover:text-marino-800 disabled:opacity-50"
             >
               <LogOut className="size-[18px]" aria-hidden="true" />
-              <span className="sr-only">Cerrar sesión</span>
+              <span className="max-sm:sr-only">Cerrar Sesión</span>
             </button>
           </div>
         </div>

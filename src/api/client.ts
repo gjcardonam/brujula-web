@@ -28,7 +28,7 @@ let oyenteSesionExpirada: (() => void) | null = null
 export function alExpirarSesion(f: () => void) { oyenteSesionExpirada = f }
 
 let refrescando: Promise<void> | null = null
-const MINUTOS_ENTRE_REFRESCOS = 15
+const MINUTOS_ENTRE_REFRESCOS = 2
 
 async function refrescarSiConviene() {
   const s = leerSesion()

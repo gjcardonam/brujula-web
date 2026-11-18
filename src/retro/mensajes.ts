@@ -34,12 +34,12 @@ export const POR_TIPO: Record<TipoDeError, Textos> = {
   },
   'Error de hábito': {
     normales: [
-      'Esto tú lo sabes: venías acertando en este tipo de ejercicios. Seguro se te fue un detalle, como un signo, una unidad o un "no" escondido.',
+      'Esto tú lo sabes hacer. Seguro se te fue un detalle, como un signo, una unidad o un "no" escondido.',
       'Me pasaba igual: sabía hacerlo, lo hacía rapidísimo y ahí perdía puntos. Vuelve a leer qué te piden.',
       'No es el tema, es la prisa. Antes de marcar, pregúntate: ¿respondí lo que me preguntaron?',
       'En el Saber, un descuido vale lo mismo que no saber. Diez segundos de revisión pueden salvarte varios puntos.',
       'Te reto: en el siguiente, revisa signos y unidades antes de confirmar. Si sale, ya tienes el truco.',
-      'Tus resultados recientes en este tema son buenos. Esto fue un tropezón, no un retroceso.',
+      'Esto fue un tropezón, no un retroceso. Una mirada más con calma y lo tienes.',
       'Lo difícil ya lo tienes, que es saber cómo se hace. Lo que falta es lo fácil: leer con calma hasta el final.',
       'Revisa la pregunta otra vez. Apuesto a que encuentras el detalle en menos de un minuto.',
       'Las palabras pequeñas cambian todo: "no", "excepto", "a lo sumo", "por lo menos". Vale la pena buscarlas antes de responder.',
@@ -56,7 +56,7 @@ export const POR_TIPO: Record<TipoDeError, Textos> = {
   },
   'Error de ansiedad': {
     normales: [
-      'Marcaste confianza {confianza} de 5 y la respuesta era otra. Te cuento algo: estos errores son de los que mejor se corrigen, porque la sorpresa hace que se queden.',
+      'Esta salió distinta a lo que esperabas. Te cuento algo: estos errores son de los que mejor se corrigen, porque la sorpresa hace que se queden.',
       'Tener confianza está bien. Solo date un momento antes de confirmar, sobre todo cuando la respuesta te salió muy rápido.',
       'Yo también respondía todo de una, sin dudar. Aprendí a hacer una última revisión y me fue mejor. Pruébalo en el siguiente.',
       'Esta te sorprendió, y eso es bueno: lo que nos sorprende es lo que más recordamos. Mira en qué paso se separó tu camino del correcto.',
@@ -68,7 +68,7 @@ export const POR_TIPO: Record<TipoDeError, Textos> = {
       'Tu seguridad es una fortaleza. Solo falta acompañarla de una última mirada antes de confirmar.',
     ],
     seguidos: [
-      'Llevas varias en {componente} en las que tenías mucha confianza y no salieron. Puede haber una idea que se siente bien pero no es; lee despacio la próxima explicación.',
+      'Llevas varias en {componente} que parecían claras y no salieron. Puede haber una idea que se siente bien pero no es; lee despacio la próxima explicación.',
       'Hagamos algo distinto en el próximo: antes de confirmar, explícate en una frase por qué esa es la respuesta.',
     ],
     anecdotas: [

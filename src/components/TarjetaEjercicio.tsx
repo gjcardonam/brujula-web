@@ -77,7 +77,7 @@ export function TarjetaEjercicioAdmin({
 }) {
   const desactivado = tarjeta.estado === 'Desactivado'
   return (
-    <article className={cn('tarjeta flex h-full flex-col p-5', desactivado && 'bg-hueso')}>
+    <article className={cn('tarjeta flex h-full flex-col p-5', desactivado && 'border-[#d4d6db] bg-[#eceef1] grayscale-[0.6] [&_p]:text-texto-tenue')}>
       <Cabecera tarjeta={tarjeta} mostrarComponente={mostrarComponente} />
       <p className="mt-4 flex-1 text-sm leading-relaxed text-texto-suave">
         {tarjeta.competencia}

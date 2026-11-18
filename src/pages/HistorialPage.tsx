@@ -4,6 +4,7 @@ import { cn } from 'cn'
 import { api, mensajeDe, urlDeArchivo } from '@/api/client'
 import type { IntentoDetalle, IntentoResumen, OpcionRevisada, Pagina } from '@/api/types'
 import { Aviso } from '@/components/Aviso'
+import { Cabecera } from '@/components/Cabecera'
 import { IconoComponente, tonoDeComponente } from '@/components/Componente'
 import { EstadoVacio } from '@/components/EstadoVacio'
 import { FranjaDeCorreccion } from '@/components/FranjaDeCorreccion'
@@ -109,12 +110,12 @@ export function HistorialPage() {
 
   return (
     <div className="animate-entrar space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Historial</h1>
-        <p className="mt-1.5 text-base text-texto-suave">
-          Tus intentos, del más reciente al más antiguo. Cada intento se conserva como un registro independiente.
-        </p>
-      </header>
+      <Cabecera
+        tono="teal"
+        etiqueta="Tu recorrido"
+        titulo="Historial"
+        descripcion="Tus intentos, del más reciente al más antiguo. Cada intento se conserva como un registro independiente."
+      />
 
       {error && <Aviso>{error}</Aviso>}
 

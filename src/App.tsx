@@ -12,10 +12,13 @@ import { RestablecerPage } from '@/pages/RestablecerPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { BancoPage } from '@/pages/BancoPage'
 import { EjercicioPage } from '@/pages/EjercicioPage'
-import { ErroresPage } from '@/pages/ErroresPage'
 import { HistorialPage } from '@/pages/HistorialPage'
 import { EjercicioFormPage } from '@/pages/admin/EjercicioFormPage'
 import { EjercicioDetallePage } from '@/pages/admin/EjercicioDetallePage'
+import { SimulacrosPage } from '@/pages/SimulacrosPage'
+import { SimulacroEnCursoPage } from '@/pages/SimulacroEnCursoPage'
+import { ResultadoSimulacroPage } from '@/pages/ResultadoSimulacroPage'
+import { EstadisticasPage } from '@/pages/EstadisticasPage'
 
 function Privado({ rol, children }: { rol?: 'Estudiante' | 'Administrador'; children: ReactElement }) {
   const { usuario } = useAuth()
@@ -45,13 +48,16 @@ export default function App() {
         <Route path="/restablecer" element={<RestablecerPage />} />
 
         <Route path="/ejercicios/:id" element={<Privado rol="Estudiante"><EjercicioPage /></Privado>} />
+        <Route path="/simulacros/:id" element={<Privado rol="Estudiante"><SimulacroEnCursoPage /></Privado>} />
 
         <Route element={<Privado><BarraSuperior /></Privado>}>
           <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/banco" element={<Privado rol="Estudiante"><BancoPage /></Privado>} />
-          <Route path="/estadisticas" element={<Privado rol="Estudiante"><ErroresPage /></Privado>} />
           <Route path="/historial" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
           <Route path="/historial/:id" element={<Privado rol="Estudiante"><HistorialPage /></Privado>} />
+          <Route path="/simulacros" element={<Privado rol="Estudiante"><SimulacrosPage /></Privado>} />
+          <Route path="/simulacros/:id/resultado" element={<Privado rol="Estudiante"><ResultadoSimulacroPage /></Privado>} />
+          <Route path="/estadisticas" element={<Privado rol="Estudiante"><EstadisticasPage /></Privado>} />
           <Route path="/admin/banco" element={<Privado rol="Administrador"><BancoPage /></Privado>} />
           <Route path="/admin/ejercicios/nuevo" element={<Privado rol="Administrador"><EjercicioFormPage /></Privado>} />
           <Route path="/admin/ejercicios/:id" element={<Privado rol="Administrador"><EjercicioDetallePage /></Privado>} />

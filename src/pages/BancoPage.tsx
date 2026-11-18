@@ -14,6 +14,7 @@ import { Paginacion } from '@/components/Paginacion'
 import { RutaDeComponente, RutaDeComponenteEsqueleto } from '@/components/RutaDeComponente'
 import { TarjetaEjercicio, TarjetaEjercicioAdmin, TarjetaEjercicioEsqueleto } from '@/components/TarjetaEjercicio'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const NUMEROS = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve']
@@ -200,8 +201,11 @@ export function BancoPage() {
   const nombreComponente = listaComponentes.find(c => c.id === componente)?.nombre
   const cantidadComponente = listaComponentes.find(c => c.id === componente)?.cantidad ?? 0
 
+  const [porConfirmar, setPorConfirmar] = useState<Tarjeta | null>(null)
+
   const cambiarEstado = useCallback(async (tarjeta: Tarjeta) => {
     const nuevo = tarjeta.estado === 'Activo' ? 'Desactivado' : 'Activo'
+    setPorConfirmar(null)
     setCambiandoEstado(tarjeta.id)
     try {
       await api(`/ejercicios/${tarjeta.id}/estado`, { method: 'PATCH', body: { estado: nuevo } })
@@ -252,7 +256,7 @@ export function BancoPage() {
 
         {vacio && (
           <EstadoVacio
-            titulo="El banco todavía está vacío"
+            titulo="Aún no hay ejercicios disponibles"
             descripcion="Vuelve más tarde: tu profesor aún no ha publicado ejercicios para practicar."
           />
         )}
@@ -386,7 +390,9 @@ export function BancoPage() {
 
         {vacio && (
           <EstadoVacio
-            titulo={componente ? 'Todavía no hay ejercicios aquí' : 'El banco todavía está vacío'}
+            titulo={componente
+              ? 'Aún no hay ejercicios disponibles para este componente'
+              : esAdmin ? 'Aún no hay ejercicios registrados' : 'Aún no hay ejercicios disponibles'}
             descripcion={
               componente
                 ? `Aún no hay ejercicios de ${nombreComponente ?? 'este componente'}. Prueba con otro.`
@@ -414,7 +420,7 @@ export function BancoPage() {
                       tarjeta={t}
                       mostrarComponente={componente === null}
                       cambiandoEstado={cambiandoEstado === t.id}
-                      onCambiarEstado={t => void cambiarEstado(t)}
+                      onCambiarEstado={setPorConfirmar}
                     />
                   )
                 : (
@@ -435,6 +441,32 @@ export function BancoPage() {
           <Paginacion pagina={datos.pagina} totalPaginas={datos.totalPaginas} onCambiar={irPagina} />
         </div>
       )}
+      <Dialog open={porConfirmar !== null} onOpenChange={abierto => { if (!abierto) setPorConfirmar(null) }}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>
+              {porConfirmar?.estado === 'Activo'
+                ? `¿Desactivar el ejercicio ${porConfirmar?.numero}?`
+                : `¿Activar el ejercicio ${porConfirmar?.numero}?`}
+            </DialogTitle>
+            <DialogDescription>
+              {porConfirmar?.estado === 'Activo'
+                ? 'Dejará de estar disponible para los estudiantes. No se elimina y conserva sus intentos.'
+                : 'Volverá a estar disponible para los estudiantes en el banco y en los filtros.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button
+              type="button"
+              variant={porConfirmar?.estado === 'Activo' ? 'principal' : 'acento'}
+              onClick={() => { if (porConfirmar) void cambiarEstado(porConfirmar) }}
+            >
+              {porConfirmar?.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+            </Button>
+            <Button type="button" variant="contorno" onClick={() => setPorConfirmar(null)}>Cancelar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

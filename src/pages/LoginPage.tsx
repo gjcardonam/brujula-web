@@ -111,7 +111,7 @@ export function LoginPage() {
         <div className="space-y-4">
           <Button type="submit" size="bloque" disabled={enviando}>
             {enviando && <Loader2 className="size-[18px] animate-spin" aria-hidden="true" />}
-            {enviando ? 'Validando' : 'Entrar'}
+            {enviando ? 'Validando' : 'Iniciar Sesión'}
           </Button>
           <div className="text-center">
             <Link to="/recuperar" className="text-sm font-bold text-marino-700 underline decoration-2 underline-offset-4 hover:text-violeta-600">
