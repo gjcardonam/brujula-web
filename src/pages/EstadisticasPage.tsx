@@ -193,7 +193,7 @@ export function EstadisticasPage() {
       </Seccion>
 
       <section aria-labelledby="titulo-simulacros" className="space-y-4">
-        <h2 id="titulo-simulacros" className="text-xl font-bold text-marino-800">Simulacros</h2>
+        <h2 id="titulo-simulacros" className="text-xl font-bold text-white">Simulacros</h2>
         {simulacros.cantidad === 0 ? (
           <div className="tarjeta flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-texto-suave">Aún no has terminado ningún simulacro.</p>

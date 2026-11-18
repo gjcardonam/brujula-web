@@ -22,7 +22,7 @@ function VolverASimulacros() {
   return (
     <Link
       to="/simulacros"
-      className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+      className="inline-flex items-center gap-2 text-sm font-bold text-sobre-fondo-suave transition-colors hover:text-white"
     >
       <ArrowLeft className="size-[17px]" aria-hidden="true" />
       Volver a simulacros
@@ -286,16 +286,16 @@ export function ResultadoSimulacroPage() {
         <section
           data-sobre-marino
           aria-labelledby="titulo-resultado"
-          className="relative isolate overflow-hidden rounded-panel bg-marino-800 px-7 py-8 sm:px-[34px] sm:py-[30px]"
+          className="relative isolate overflow-hidden rounded-panel bg-[linear-gradient(120deg,#3b2fa8,var(--color-violeta-600)_60%,#8b7cf0)] px-7 py-8 shadow-[0_18px_40px_-18px_rgb(107_92_231/0.8)] sm:px-[34px] sm:py-[30px]"
         >
           <RosaDeLosVientos
             className="pointer-events-none absolute -top-[46px] -right-[34px] -z-10 size-[220px] text-white opacity-[0.16]"
           />
-          <p className="text-xs font-bold tracking-[0.1em] text-ambar-500 uppercase">Resultado del simulacro</p>
+          <p className="text-xs font-bold tracking-[0.1em] text-ambar-200 uppercase">Resultado del simulacro</p>
           <h1 id="titulo-resultado" className="mt-2.5 text-2xl leading-[1.2] font-bold text-white sm:text-3xl">
             {sinRespuestas ? 'No confirmaste respuestas' : `${porcentaje(r.porcentajeAciertos)} de aciertos`}
           </h1>
-          <p className="mt-2 text-md leading-relaxed text-marino-200">
+          <p className="mt-2 text-md leading-relaxed text-violeta-50">
             {fecha(r.fechaInicio)} · {r.duracionMinutos} minutos configurados
           </p>
         </section>
@@ -310,7 +310,7 @@ export function ResultadoSimulacroPage() {
       </div>
 
       <section aria-labelledby="titulo-recomendaciones" className="space-y-4">
-        <h2 id="titulo-recomendaciones" className="text-xl font-bold text-marino-800">Qué reforzar</h2>
+        <h2 id="titulo-recomendaciones" className="text-xl font-bold text-white">Qué reforzar</h2>
         <Recomendaciones r={r} />
       </section>
 
@@ -324,8 +324,8 @@ export function ResultadoSimulacroPage() {
       {r.detalle.length > 0 && (
         <section aria-labelledby="titulo-detalle" className="space-y-4">
           <div>
-            <h2 id="titulo-detalle" className="text-xl font-bold text-marino-800">Tus respuestas</h2>
-            <p className="text-base text-texto-suave">Abre cada una para ver la opción que elegiste y su explicación.</p>
+            <h2 id="titulo-detalle" className="text-xl font-bold text-white">Tus respuestas</h2>
+            <p className="text-base text-sobre-fondo-suave">Abre cada una para ver la opción que elegiste y su explicación.</p>
           </div>
           <ol className="space-y-3">
             {r.detalle.map((d, i) => <DetalleDeRespuesta key={d.id} d={d} indice={i + 1} />)}

@@ -381,7 +381,7 @@ export function SimulacroEnCursoPage() {
         ) : (
           <div key={ejercicio.id} className="my-auto w-full max-w-[820px] animate-entrar">
             <div className="mb-5 flex flex-wrap items-center gap-2.5">
-              <span className="text-xs font-bold tracking-[0.08em] text-texto-suave uppercase">
+              <span className="text-xs font-bold tracking-[0.08em] text-sobre-fondo-suave uppercase">
                 Pregunta {numeroPregunta}
               </span>
               <span className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-bold', tono.pildora)}>
@@ -414,6 +414,7 @@ export function SimulacroEnCursoPage() {
                 />
               </div>
             ) : (<>
+            <section className="tarjeta px-6 py-6 sm:px-8 sm:py-7">
             <h1
               ref={refEnunciado}
               tabIndex={-1}
@@ -434,6 +435,7 @@ export function SimulacroEnCursoPage() {
                 className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde object-contain"
               />
             )}
+            </section>
 
             <OpcionesDeRespuesta
               opciones={ejercicio.opciones}
@@ -464,7 +466,7 @@ export function SimulacroEnCursoPage() {
 
             {!respondido && !bloqueado && (
               <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-texto-suave">
+                <p className="text-sm text-sobre-fondo-suave">
                   {enEspera
                     ? 'Tu respuesta está lista; la enviamos apenas vuelva la conexión.'
                     : seleccion === null
@@ -476,6 +478,7 @@ export function SimulacroEnCursoPage() {
                 <Button
                   type="button"
                   size="lg"
+                  variant="acento"
                   onClick={enEspera ? () => void mandar() : confirmar}
                   disabled={seleccion === null || confianza === null || enviando}
                   className="max-sm:w-full"

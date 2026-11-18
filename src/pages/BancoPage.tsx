@@ -64,7 +64,7 @@ function VolverALaRuta() {
   return (
     <Link
       to="/banco"
-      className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+      className="inline-flex items-center gap-2 text-sm font-bold text-sobre-fondo-suave transition-colors hover:text-white"
     >
       <ArrowLeft className="size-[17px]" aria-hidden="true" />
       Volver a la ruta
@@ -85,8 +85,8 @@ function CabeceraDeLista({ nombre, cantidad }: { nombre: string; cantidad: numbe
           <IconoComponente nombre={nombre} className="size-[27px]" />
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">{nombre}</h1>
-          <p className="text-base text-texto-suave">
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">{nombre}</h1>
+          <p className="text-base text-sobre-fondo-suave">
             {cantidad} {cantidad === 1 ? 'ejercicio' : 'ejercicios'} para practicar
           </p>
         </div>
@@ -102,13 +102,13 @@ function CabeceraTodos({ cantidad }: { cantidad: number }) {
       <div className="mt-4 flex items-center gap-4">
         <span
           aria-hidden="true"
-          className="grid size-[58px] shrink-0 place-items-center rounded-[18px] bg-marino-100 text-marino-700"
+          className="grid size-[58px] shrink-0 place-items-center rounded-[18px] bg-white/12 text-white"
         >
           <LayoutGrid className="size-[27px]" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Todos los ejercicios</h1>
-          <p className="text-base text-texto-suave">
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">Todos los ejercicios</h1>
+          <p className="text-base text-sobre-fondo-suave">
             {cantidad} {cantidad === 1 ? 'ejercicio' : 'ejercicios'} en total
           </p>
         </div>
@@ -266,18 +266,18 @@ export function BancoPage() {
             {destacado && (
               <section
                 data-sobre-marino
-                className="relative isolate overflow-hidden rounded-panel bg-marino-800 px-7 py-8 sm:px-[34px] sm:py-[30px]"
+                className="relative isolate overflow-hidden rounded-panel bg-[linear-gradient(120deg,#3b2fa8,var(--color-violeta-600)_60%,#8b7cf0)] px-7 py-8 shadow-[0_18px_40px_-18px_rgb(107_92_231/0.8)] sm:px-[34px] sm:py-[30px]"
               >
                 <RosaDeLosVientos
                   className="pointer-events-none absolute -top-[46px] -right-[34px] -z-10 size-[220px] text-white opacity-[0.16]"
                 />
                 <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:gap-[34px]">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold tracking-[0.1em] text-ambar-500 uppercase">Empieza por aquí</p>
+                    <p className="text-xs font-bold tracking-[0.1em] text-ambar-200 uppercase">Empieza por aquí</p>
                     <h2 className="mt-2.5 max-w-[620px] text-2xl leading-[1.2] font-bold text-white sm:text-3xl">
                       {destacado.componente} · Ejercicio {destacado.numero}
                     </h2>
-                    <p className="mt-2 max-w-[560px] text-md leading-relaxed text-marino-200">
+                    <p className="mt-2 max-w-[560px] text-md leading-relaxed text-violeta-50">
                       {destacado.competencia} · Nivel {destacado.nivel.toLowerCase()}
                     </p>
                   </div>
@@ -293,14 +293,14 @@ export function BancoPage() {
 
             <div className="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-1">
               <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-                <h1 className="text-xl font-bold text-marino-800">Tu ruta de práctica</h1>
-                <p className="text-base text-texto-suave">
+                <h1 className="text-xl font-bold text-white">Tu ruta de práctica</h1>
+                <p className="text-base text-sobre-fondo-suave">
                   {componentes.total} ejercicios en {enPalabras(listaComponentes.length)} componentes
                 </p>
               </div>
               <Link
                 to="/banco?vista=todos"
-                className="text-sm font-bold text-texto-suave underline-offset-4 transition-colors hover:text-marino-800 hover:underline"
+                className="text-sm font-bold text-sobre-fondo-suave underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 Ver todos los ejercicios
               </Link>
@@ -325,8 +325,8 @@ export function BancoPage() {
       {esAdmin ? (
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Banco de ejercicios</h1>
-            <p className="mt-1.5 text-base text-texto-suave">Revisa lo publicado y agrega ejercicios nuevos.</p>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">Banco de ejercicios</h1>
+            <p className="mt-1.5 text-base text-sobre-fondo-suave">Revisa lo publicado y agrega ejercicios nuevos.</p>
           </div>
           <Button asChild variant="acento">
             <Link to="/admin/ejercicios/nuevo">

@@ -241,15 +241,15 @@ export function EjercicioFormPage() {
       <header className="mb-7">
         <Link
           to={editando ? `/admin/ejercicios/${id}` : '/admin/banco'}
-          className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+          className="inline-flex items-center gap-2 text-sm font-bold text-sobre-fondo-suave transition-colors hover:text-white"
         >
           <ArrowLeft className="size-[17px]" aria-hidden="true" />
           {editando ? `Volver al ejercicio ${numero}` : 'Volver al banco'}
         </Link>
-        <h1 className="mt-4 text-2xl font-bold text-marino-800 sm:text-3xl">
+        <h1 className="mt-4 text-2xl font-bold text-white sm:text-3xl">
           {editando ? `Editar ejercicio ${numero}` : 'Crear ejercicio'}
         </h1>
-        <p className="mt-1.5 text-base text-texto-suave">
+        <p className="mt-1.5 text-base text-sobre-fondo-suave">
           {editando
             ? 'La edición no cambia el número ni el estado del ejercicio.'
             : 'Queda activo y con número propio en cuanto lo guardes.'}

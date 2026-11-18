@@ -280,7 +280,7 @@ export function SimulacrosPage() {
       )}
 
       <section aria-labelledby="titulo-historial" className="space-y-4">
-        <h2 id="titulo-historial" className="text-xl font-bold text-marino-800">Historial de simulacros</h2>
+        <h2 id="titulo-historial" className="text-xl font-bold text-white">Historial de simulacros</h2>
 
         {errorHistorial && (
           <Aviso>

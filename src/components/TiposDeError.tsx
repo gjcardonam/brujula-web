@@ -117,7 +117,7 @@ export function TiposDeError() {
   return <div className="space-y-5">
     <section aria-labelledby="patrones-titulo" className="space-y-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><h2 id="patrones-titulo" className="text-xl font-bold text-marino-800 sm:text-2xl">Tipos de error</h2><p className="mt-1 text-sm text-texto-suave">Por qué fallaste, no solo cuántas veces. Filtra por componente para ver dónde se concentran.</p></div>
+        <div><h2 id="patrones-titulo" className="text-xl font-bold text-white sm:text-2xl">Tipos de error</h2><p className="mt-1 text-sm text-sobre-fondo-suave">Por qué fallaste, no solo cuántas veces. Filtra por componente para ver dónde se concentran.</p></div>
         <Campo etiqueta="Componente" className="w-full sm:w-60">
           {p => (
             <Select value={componente || TODOS} onValueChange={v => setComponente(v === TODOS ? '' : v)}>
@@ -186,8 +186,8 @@ export function TiposDeError() {
       </div>
     </section>
 
-    <details className="group text-sm text-texto-suave">
-      <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-marino-700 [&::-webkit-details-marker]:hidden"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
+    <details className="group text-sm text-sobre-fondo-suave">
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-1 font-bold text-white [&::-webkit-details-marker]:hidden"><BookOpen className="size-4" aria-hidden="true" /> ¿Cómo se clasifica cada error? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
       <p className="mt-3 max-w-3xl leading-relaxed">Solo se clasifican las respuestas incorrectas. Si marcaste confianza 4 o 5, cuenta como error de ansiedad. Si venías acertando el 70 % o más de tus últimos ejercicios en ese componente o competencia, cuenta como error de hábito. En los demás casos cuenta como error cognitivo. Cuando un tipo pasa de la mitad de tus errores, lo destacamos arriba con una recomendación.</p>
     </details>
   </div>

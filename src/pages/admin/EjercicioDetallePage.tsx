@@ -120,13 +120,13 @@ export function EjercicioDetallePage() {
       <header>
         <Link
           to="/admin/banco"
-          className="inline-flex items-center gap-2 text-sm font-bold text-texto-suave transition-colors hover:text-marino-800"
+          className="inline-flex items-center gap-2 text-sm font-bold text-sobre-fondo-suave transition-colors hover:text-white"
         >
           <ArrowLeft className="size-[17px]" aria-hidden="true" />
           Volver al banco
         </Link>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">Ejercicio {ejercicio.numero}</h1>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">Ejercicio {ejercicio.numero}</h1>
           <span
             className={cn(
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold',

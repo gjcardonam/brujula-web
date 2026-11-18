@@ -250,7 +250,7 @@ export function EjercicioPage() {
       <header className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-3 px-5 py-3 sm:px-10">
         <Link
           to={volver}
-          className="inline-flex items-center gap-2.5 text-base font-bold text-texto-suave transition-colors hover:text-marino-800"
+          className="inline-flex items-center gap-2.5 text-base font-bold text-sobre-fondo-suave transition-colors hover:text-white"
         >
           <ArrowLeft className="size-[18px]" strokeWidth={2.5} aria-hidden="true" />
           Salir de la práctica
@@ -326,6 +326,7 @@ export function EjercicioPage() {
               </p>
             )}
 
+            <section className="tarjeta px-6 py-6 sm:px-8 sm:py-7">
             <h1
               ref={refEnunciado}
               tabIndex={-1}
@@ -345,6 +346,7 @@ export function EjercicioPage() {
                 className="mt-6 max-h-[460px] w-full rounded-tarjeta border border-borde bg-superficie object-contain"
               />
             )}
+            </section>
 
             <div role="radiogroup" aria-label="Opciones de respuesta" className="mt-7 grid gap-3.5 sm:grid-cols-2">
               {ejercicio.opciones.map((o, i) => {
@@ -386,7 +388,7 @@ export function EjercicioPage() {
             {error && <Aviso className="mt-6">{error}</Aviso>}
 
             <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-texto-suave">
+              <p className="text-sm text-sobre-fondo-suave">
                 {seleccion === null
                   ? 'Elige una opción para continuar.'
                   : confianza === null
@@ -396,6 +398,7 @@ export function EjercicioPage() {
               <Button
                 type="button"
                 size="lg"
+                variant="acento"
                 onClick={confirmar}
                 disabled={seleccion === null || confianza === null || enviando}
                 className="max-sm:w-full"

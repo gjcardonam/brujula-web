@@ -108,13 +108,13 @@ export function PerfilPage() {
       <header className="flex items-center gap-5">
         <span
           aria-hidden="true"
-          className="grid size-16 shrink-0 place-items-center rounded-full bg-marino-800 font-titular text-xl font-bold text-white"
+          className="grid size-16 shrink-0 place-items-center rounded-full bg-ambar-500 font-titular text-xl font-bold text-marino-900"
         >
           {iniciales || 'B'}
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-marino-800 sm:text-3xl">{usuario?.nombre} {usuario?.apellido}</h1>
-          <p className="truncate text-base text-texto-suave">{usuario?.email}</p>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">{usuario?.nombre} {usuario?.apellido}</h1>
+          <p className="truncate text-base text-sobre-fondo-suave">{usuario?.email}</p>
         </div>
       </header>
 
